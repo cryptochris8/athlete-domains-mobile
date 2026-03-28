@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+:root {
+  /* iOS safe area insets (notch, Dynamic Island, home indicator) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Design tokens */
+  --color-primary: #FF6B35;
+  --color-secondary: #004E89;
+  --color-accent: #F7C948;
+  --color-success: #2ECC71;
+  --color-danger: #E74C3C;
+  --color-dark: #1A1A2E;
+  --color-dark-alt: #16213E;
+  --color-white: #FFFFFF;
+  --color-gold: #FFD700;
+
+  /* Surfaces */
+  --panel-bg: rgba(0, 0, 0, 0.6);
+  --panel-bg-solid: rgba(22, 33, 62, 0.95);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-round: 50%;
+
+  /* Effects */
+  --blur-sm: blur(4px);
+  --blur-md: blur(8px);
+  --blur-lg: blur(16px);
+
+  /* Shadows */
+  --shadow-glow: 0 0 20px rgba(255, 107, 53, 0.3);
+  --shadow-panel: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-button: 0 4px 15px rgba(0, 0, 0, 0.3);
+
+  /* Spacing */
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --gap-xl: 32px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Fredoka', sans-serif;
+  background: #1A1A2E;
+  color: #FFFFFF;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+
+button {
+  font-family: 'Fredoka', sans-serif;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+button:active {
+  transform: scale(0.95);
+}
+
+button:focus-visible {
+  outline: 3px solid #F7C948;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  button:hover {
+    transform: none;
+  }
+
+  button:active {
+    transform: none;
+  }
+}
+
+/* Quiz answer animations */
+@keyframes quiz-correct {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.05); }
+  30% { transform: scale(0.98); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes quiz-wrong {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px); }
+  30% { transform: translateX(8px); }
+  50% { transform: translateX(-6px); }
+  70% { transform: translateX(6px); }
+  90% { transform: translateX(-3px); }
+}
+
+@keyframes coin-bounce {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  50% { transform: translateY(-12px) scale(1.3); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.quiz-modal-correct {
+  animation: quiz-correct 0.5s ease-out;
+}
+
+.quiz-modal-wrong {
+  animation: quiz-wrong 0.4s ease-out;
+}
+
+.coin-bounce {
+  animation: coin-bounce 0.6s ease-out;
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}

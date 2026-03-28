@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-CHr7CWtB.js","assets/index-CqTi0fMd.js","assets/r3f-DkI-ooPH.js","assets/three-rI9M0Ydg.js","assets/index-lfTh4Lb7.css"])))=>i.map(i=>d[i]);
+import{_ as r}from"./r3f-DkI-ooPH.js";import{r as t}from"./index-CqTi0fMd.js";import"./three-rI9M0Ydg.js";const _=t("ScreenOrientation",{web:()=>r(()=>import("./web-CHr7CWtB.js"),__vite__mapDeps([0,1,2,3,4])).then(e=>new e.ScreenOrientationWeb)});export{_ as ScreenOrientation};

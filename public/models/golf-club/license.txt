@@ -1,0 +1,11 @@
+Model Information:
+* title:	Golf Club Driver Spikes
+* source:	https://sketchfab.com/3d-models/golf-club-driver-spikes-0ddab0d90a6f44e9852903384fe98b04
+* author:	Shannan Taylor (https://sketchfab.com/ShannanTaylor)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Golf Club Driver Spikes" (https://sketchfab.com/3d-models/golf-club-driver-spikes-0ddab0d90a6f44e9852903384fe98b04) by Shannan Taylor (https://sketchfab.com/ShannanTaylor) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
