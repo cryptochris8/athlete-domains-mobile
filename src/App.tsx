@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { GameCanvas } from '@/core/GameCanvas'
 import { useGameStore } from '@/stores/useGameStore'
 import { useAudioSync } from '@/hooks/useAudioSync'
@@ -14,6 +14,8 @@ import { useTouchDevice } from '@/hooks/useTouchDevice'
 import { MobileJoystick } from '@/ui/MobileJoystick'
 import { MobileSoccerControls } from '@/ui/MobileSoccerControls'
 import { hideSplashScreen } from '@/core/capacitor'
+import { useDailyRewardStore } from '@/stores/useDailyRewardStore'
+import { DailyRewardModal } from '@/ui/DailyRewardModal'
 
 function SceneContent() {
   const currentScene = useGameStore((s) => s.currentScene)
@@ -57,11 +59,19 @@ export function App() {
   const currentScene = useGameStore((s) => s.currentScene)
   const gamePhase = useGameStore((s) => s.gamePhase)
   const isLoading = useGameStore((s) => s.isLoading)
+  const [showDailyReward, setShowDailyReward] = useState(false)
 
   // Hide native splash screen once app has loaded
   useEffect(() => {
     if (!isLoading) hideSplashScreen()
   }, [isLoading])
+
+  // Auto-trigger daily reward modal on mount when on menu screen
+  useEffect(() => {
+    if (currentScene === 'menu' && useDailyRewardStore.getState().canClaim()) {
+      setShowDailyReward(true)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Play background music for each scene
   useEffect(() => {
@@ -117,6 +127,7 @@ export function App() {
       {gamePhase === 'paused' && <PauseMenu />}
       {isLoading && <LoadingScreen />}
       <AchievementToast />
+      {showDailyReward && <DailyRewardModal onClose={() => setShowDailyReward(false)} />}
     </>
   )
 }

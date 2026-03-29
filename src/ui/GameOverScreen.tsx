@@ -9,6 +9,7 @@ import { audioManager } from '@/core/AudioManager'
 import { saveCurrentPlayer } from '@/core/playerScoping'
 import { useAchievementCheck } from '@/hooks/useAchievementCheck'
 import { useSoccer } from '@/games/soccer/useSoccer'
+import { showRewardedAd, prepareRewardedAd } from '@/services/adService'
 import type { Scene } from '@/types'
 
 interface GameOverScreenProps {
@@ -30,16 +31,21 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
   const soccerPlayerGoals = useSoccer((s) => s.playerGoals)
   const soccerOpponentGoals = useSoccer((s) => s.opponentGoals)
 
+  const profile = usePlayerStore.getState().getActiveProfile()
+
   const stars = getStarRating(game, currentScore)
   const isLowerBetter = game === 'minigolf'
   const isNewHigh = isLowerBetter
     ? (highScore === 0 || currentScore < highScore)
     : currentScore > highScore
-  const coinsEarned = getGameCoins(stars, isNewHigh)
+  const baseCoinsEarned = getGameCoins(stars, isNewHigh)
 
   // Animated score counter
   const [displayScore, setDisplayScore] = useState(0)
   const [revealedStars, setRevealedStars] = useState(0)
+  const [doubled, setDoubled] = useState(false)
+
+  const coinsEarned = doubled ? baseCoinsEarned * 2 : baseCoinsEarned
 
   // Score count-up animation
   useEffect(() => {
@@ -70,6 +76,18 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
     const timer = setTimeout(() => playAgainRef.current?.focus(), 1800 + stars * 400)
     return () => clearTimeout(timer)
   }, [stars])
+
+  // Pre-load rewarded ad
+  useEffect(() => {
+    prepareRewardedAd('double_coins')
+  }, [])
+
+  const handleDoubleCoins = async () => {
+    const success = await showRewardedAd()
+    if (success) {
+      setDoubled(true)
+    }
+  }
 
   const handleBackToGames = () => {
     audioManager.play('click')
@@ -208,6 +226,37 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
       )}
       {coinsEarned === 0 && (
         <div style={{ marginBottom: '2rem' }} />
+      )}
+
+      {/* Double coins via rewarded ad */}
+      {!profile?.adsRemoved && baseCoinsEarned > 0 && !doubled && (
+        <button
+          onClick={handleDoubleCoins}
+          style={{
+            padding: '0.6rem 1.5rem',
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #FFD700, #FF6B35)',
+            color: COLORS.dark,
+            border: 'none',
+            cursor: 'pointer',
+            marginBottom: '1rem',
+            minHeight: '44px',
+          }}
+        >
+          {'\uD83C\uDFAC'} Watch Ad to Double Coins
+        </button>
+      )}
+      {doubled && (
+        <div style={{
+          fontSize: '1rem',
+          fontWeight: 600,
+          color: '#2ECC71',
+          marginBottom: '1rem',
+        }}>
+          Doubled!
+        </div>
       )}
 
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', padding: '0 1rem' }}>

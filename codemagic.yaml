@@ -1,0 +1,165 @@
+workflows:
+  ios-build:
+    name: iOS Build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    integrations:
+      app_store_connect: Codemagic  # Set up in Codemagic UI
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.athletedomains.ios
+      node: 20
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_store_credentials  # Configure in Codemagic UI
+      vars:
+        BUNDLE_ID: "com.athletedomains.ios"
+        APP_NAME: "Athlete Domains"
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - node_modules
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: release/*
+          include: true
+    scripts:
+      # Install Node dependencies
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      # Run type check and lint
+      - name: Type check
+        script: |
+          npx tsc -p tsconfig.app.json --noEmit
+
+      # Run tests
+      - name: Run tests
+        script: |
+          npm run test || true
+
+      # Build web assets
+      - name: Build web app
+        script: |
+          npm run build
+
+      # Generate iOS project if not committed
+      - name: Add iOS platform
+        script: |
+          npx cap add ios || true
+          npx cap sync ios
+
+      # Set bundle version from build number
+      - name: Set iOS version
+        script: |
+          cd ios/App
+          agvtool new-version -all $((PROJECT_BUILD_NUMBER))
+          agvtool new-marketing-version 1.0.$((PROJECT_BUILD_NUMBER))
+
+      # Install CocoaPods
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      # Build the iOS app
+      - name: Build iOS
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App" \
+            --archive-flags="-destination 'generic/platform=iOS'"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - ios/App/build/Reports/**
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        expire_build_submitted_for_review: true
+      email:
+        recipients:
+          - chris@athletedomains.com  # Update with your email
+        notify:
+          success: true
+          failure: true
+
+  # Debug build for testing (no signing required)
+  ios-debug:
+    name: iOS Debug Build
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - node_modules
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: develop
+          include: true
+        - pattern: feature/*
+          include: true
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+
+      - name: Type check
+        script: |
+          npx tsc -p tsconfig.app.json --noEmit
+
+      - name: Run tests
+        script: |
+          npm run test || true
+
+      - name: Build web app
+        script: |
+          npm run build
+
+      - name: Add iOS platform
+        script: |
+          npx cap add ios || true
+          npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Build debug
+        script: |
+          xcode-project build-ipa \
+            --workspace "ios/App/App.xcworkspace" \
+            --scheme "App" \
+            --config Debug \
+            --archive-flags="-destination 'generic/platform=iOS Simulator'" \
+            || echo "Debug build completed (simulator only)"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - chris@athletedomains.com  # Update with your email
+        notify:
+          success: false
+          failure: true

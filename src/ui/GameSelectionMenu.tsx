@@ -1,7 +1,14 @@
+import { useState } from 'react'
 import { useGameStore } from '@/stores/useGameStore'
 import { useScoreStore } from '@/stores/useScoreStore'
+import { usePlayerStore } from '@/stores/usePlayerStore'
+import { useDailyRewardStore } from '@/stores/useDailyRewardStore'
 import { audioManager } from '@/core/AudioManager'
 import { COLORS } from '@/core/constants'
+import { LockerRoom } from '@/ui/LockerRoom'
+import { PackOpenScreen } from '@/ui/PackOpenScreen'
+import { ShopPanel } from '@/ui/ShopPanel'
+import { DailyRewardModal } from '@/ui/DailyRewardModal'
 import type { Scene } from '@/types'
 
 interface GameCard {
@@ -28,6 +35,13 @@ export function GameSelectionMenu() {
   const selectedDifficulty = useGameStore((s) => s.selectedDifficulty)
   const getHighScore = useScoreStore((s) => s.getHighScore)
   const getBestStars = useScoreStore((s) => s.getBestStars)
+  const coins = usePlayerStore((s) => s.getActiveProfile()?.coins ?? 0)
+  const canClaimDaily = useDailyRewardStore((s) => s.canClaim())
+
+  const [showLockerRoom, setShowLockerRoom] = useState(false)
+  const [showPackOpen, setShowPackOpen] = useState(false)
+  const [showShop, setShowShop] = useState(false)
+  const [showDailyReward, setShowDailyReward] = useState(false)
 
   const handleGameSelect = (scene: Scene) => {
     audioManager.play('click')
@@ -57,9 +71,23 @@ export function GameSelectionMenu() {
       }}>
         Athlete Domains
       </h1>
-      <p style={{ fontSize: '0.9rem', opacity: 0.6, marginBottom: '1.5rem' }}>
+      <p style={{ fontSize: '0.9rem', opacity: 0.6, marginBottom: '0.75rem' }}>
         Choose your game
       </p>
+
+      {/* Coin balance */}
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        padding: '0.3rem 0.8rem',
+        borderRadius: '20px',
+        background: 'rgba(0,0,0,0.4)',
+        marginBottom: '1rem',
+      }}>
+        <span style={{ fontSize: '1rem' }}>{'\uD83E\uDE99'}</span>
+        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFD700' }}>{coins}</span>
+      </div>
 
       {/* Difficulty selector */}
       <div style={{
@@ -89,6 +117,83 @@ export function GameSelectionMenu() {
             {d}
           </button>
         ))}
+      </div>
+
+      {/* Action buttons */}
+      <div style={{
+        display: 'flex',
+        gap: '0.5rem',
+        marginBottom: '1rem',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+      }}>
+        <button
+          onClick={() => { audioManager.play('click'); setShowLockerRoom(true) }}
+          style={{
+            padding: '0.4rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            borderRadius: '20px',
+            background: 'rgba(255,255,255,0.1)',
+            color: COLORS.white,
+            border: '1px solid rgba(255,255,255,0.15)',
+            cursor: 'pointer',
+            minHeight: '36px',
+          }}
+        >
+          {'\uD83D\uDEAA'} Locker Room
+        </button>
+        <button
+          onClick={() => { audioManager.play('click'); setShowPackOpen(true) }}
+          style={{
+            padding: '0.4rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            borderRadius: '20px',
+            background: 'rgba(255,255,255,0.1)',
+            color: COLORS.white,
+            border: '1px solid rgba(255,255,255,0.15)',
+            cursor: 'pointer',
+            minHeight: '36px',
+          }}
+        >
+          {'\uD83C\uDCCF'} Packs
+        </button>
+        <button
+          onClick={() => { audioManager.play('click'); setShowShop(true) }}
+          style={{
+            padding: '0.4rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            borderRadius: '20px',
+            background: 'rgba(255,255,255,0.1)',
+            color: COLORS.white,
+            border: '1px solid rgba(255,255,255,0.15)',
+            cursor: 'pointer',
+            minHeight: '36px',
+          }}
+        >
+          {'\uD83D\uDED2'} Shop
+        </button>
+        {canClaimDaily && (
+          <button
+            onClick={() => { audioManager.play('click'); setShowDailyReward(true) }}
+            style={{
+              padding: '0.4rem 1rem',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #FFD700, #FF6B35)',
+              color: COLORS.dark,
+              border: 'none',
+              cursor: 'pointer',
+              minHeight: '36px',
+              animation: 'pulse 2s ease-in-out infinite',
+            }}
+          >
+            {'\uD83C\uDF81'} Daily Reward
+          </button>
+        )}
       </div>
 
       {/* Game grid */}
@@ -150,6 +255,12 @@ export function GameSelectionMenu() {
           )
         })}
       </div>
+
+      {/* Overlays */}
+      {showLockerRoom && <LockerRoom onClose={() => setShowLockerRoom(false)} />}
+      {showPackOpen && <PackOpenScreen onClose={() => setShowPackOpen(false)} />}
+      {showShop && <ShopPanel onClose={() => setShowShop(false)} />}
+      {showDailyReward && <DailyRewardModal onClose={() => setShowDailyReward(false)} />}
     </div>
   )
 }

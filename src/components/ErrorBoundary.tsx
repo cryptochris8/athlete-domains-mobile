@@ -33,7 +33,10 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback
 
       // Inside R3F Canvas, we cannot render DOM elements - return null
-      if (this.props.canvasSafe) return null
+      if (this.props.canvasSafe) {
+        console.error(`[ErrorBoundary] ${this.props.gameName} scene crashed:`, this.state.error?.message, this.state.error?.stack)
+        return null
+      }
 
       return (
         <div style={{

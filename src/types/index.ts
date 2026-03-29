@@ -19,6 +19,12 @@ export interface PlayerProfile {
   totalXP: number
   createdAt: number
   _skinMigrated?: boolean
+  ownedAvatarIds: number[]
+  ownedCosmeticIds: string[]
+  equippedShirt: string | null
+  equippedShoes: string | null
+  adsRemoved: boolean
+  starterPackPurchased: boolean
 }
 
 export interface Achievement {

@@ -3,10 +3,12 @@ import { persist } from 'zustand/middleware'
 import type { PlayerProfile } from '@/types'
 import { LEGACY_SKIN_MAP } from '@/core/constants'
 
+const STARTER_AVATAR_IDS = [1, 100, 250, 500, 750]
+
 const DEFAULT_PROFILES: PlayerProfile[] = [
-  { id: 1, name: 'Player 1', age: 6, avatar: '🌟', skinId: 1, coins: 0, totalXP: 0, createdAt: 0 },
-  { id: 2, name: 'Player 2', age: 8, avatar: '⭐', skinId: 1, coins: 0, totalXP: 0, createdAt: 0 },
-  { id: 3, name: 'Player 3', age: 8, avatar: '💫', skinId: 1, coins: 0, totalXP: 0, createdAt: 0 },
+  { id: 1, name: 'Player 1', age: 6, avatar: '🌟', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
+  { id: 2, name: 'Player 2', age: 8, avatar: '⭐', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
+  { id: 3, name: 'Player 3', age: 8, avatar: '💫', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
 ]
 
 interface PlayerState {
@@ -18,6 +20,12 @@ interface PlayerState {
   addCoins: (amount: number) => void
   spendCoins: (amount: number) => boolean
   addXP: (amount: number) => void
+  ownAvatar: (avatarId: number) => void
+  ownsAvatar: (avatarId: number) => boolean
+  ownAvatarBatch: (avatarIds: number[]) => void
+  equipCosmetic: (slot: 'shirt' | 'shoes', itemId: string | null) => void
+  setAdsRemoved: () => void
+  setStarterPackPurchased: () => void
 }
 
 export const usePlayerStore = create<PlayerState>()(
@@ -69,6 +77,69 @@ export const usePlayerStore = create<PlayerState>()(
         set((s) => ({
           profiles: s.profiles.map((p) =>
             p.id === activeProfileId ? { ...p, totalXP: p.totalXP + amount } : p
+          ),
+        }))
+      },
+
+      ownAvatar: (avatarId) => {
+        const { activeProfileId } = get()
+        if (!activeProfileId) return
+        set((s) => ({
+          profiles: s.profiles.map((p) => {
+            if (p.id !== activeProfileId) return p
+            const owned = p.ownedAvatarIds ?? []
+            if (owned.includes(avatarId)) return p
+            return { ...p, ownedAvatarIds: [...owned, avatarId] }
+          }),
+        }))
+      },
+
+      ownsAvatar: (avatarId) => {
+        const profile = get().getActiveProfile()
+        if (!profile) return false
+        return (profile.ownedAvatarIds ?? []).includes(avatarId)
+      },
+
+      ownAvatarBatch: (avatarIds) => {
+        const { activeProfileId } = get()
+        if (!activeProfileId) return
+        set((s) => ({
+          profiles: s.profiles.map((p) => {
+            if (p.id !== activeProfileId) return p
+            const owned = new Set(p.ownedAvatarIds ?? [])
+            for (const id of avatarIds) owned.add(id)
+            return { ...p, ownedAvatarIds: [...owned] }
+          }),
+        }))
+      },
+
+      equipCosmetic: (slot, itemId) => {
+        const { activeProfileId } = get()
+        if (!activeProfileId) return
+        const field = slot === 'shirt' ? 'equippedShirt' : 'equippedShoes'
+        set((s) => ({
+          profiles: s.profiles.map((p) =>
+            p.id === activeProfileId ? { ...p, [field]: itemId } : p
+          ),
+        }))
+      },
+
+      setAdsRemoved: () => {
+        const { activeProfileId } = get()
+        if (!activeProfileId) return
+        set((s) => ({
+          profiles: s.profiles.map((p) =>
+            p.id === activeProfileId ? { ...p, adsRemoved: true } : p
+          ),
+        }))
+      },
+
+      setStarterPackPurchased: () => {
+        const { activeProfileId } = get()
+        if (!activeProfileId) return
+        set((s) => ({
+          profiles: s.profiles.map((p) =>
+            p.id === activeProfileId ? { ...p, starterPackPurchased: true } : p
           ),
         }))
       },

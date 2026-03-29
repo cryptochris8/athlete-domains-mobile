@@ -11,6 +11,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: [
+        '@capacitor-community/admob',
+        '@capacitor-community/in-app-purchases',
+      ],
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/three/')) return 'three'
