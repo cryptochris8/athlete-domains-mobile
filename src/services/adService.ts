@@ -1,35 +1,18 @@
 import type { AdPlacement } from '@/types/monetization'
 
-// Ad unit IDs — use test IDs during development
-const AD_UNIT_IDS: Record<AdPlacement, string> = {
-  double_coins: 'ca-app-pub-3940256099942544/5224354917',     // Google test ID
-  free_pack: 'ca-app-pub-3940256099942544/5224354917',
-  boost_daily: 'ca-app-pub-3940256099942544/5224354917',
-  retry_after_loss: 'ca-app-pub-3940256099942544/5224354917',
-}
-
-let adMobPlugin: typeof import('@capacitor-community/admob') | null = null
-
-async function getAdMob() {
-  if (adMobPlugin) return adMobPlugin
-  try {
-    adMobPlugin = await import('@capacitor-community/admob')
-    return adMobPlugin
-  } catch {
-    return null
-  }
+// Detect if we're running in Capacitor native context
+function isNative(): boolean {
+  return 'Capacitor' in window
 }
 
 /**
- * Initialize AdMob. Call once at app startup.
+ * Initialize AdMob. No-op in browser.
  */
 export async function initializeAds(): Promise<void> {
-  const admob = await getAdMob()
-  if (!admob) return
+  if (!isNative()) return
   try {
-    await admob.AdMob.initialize({
-      initializeForTesting: true,
-    })
+    const { AdMob } = await Function('return import("@capacitor-community/admob")')()
+    await AdMob.initialize({ initializeForTesting: true })
   } catch (e) {
     console.warn('[AdService] Init failed:', e)
   }
@@ -38,12 +21,12 @@ export async function initializeAds(): Promise<void> {
 /**
  * Prepare a rewarded ad for a placement.
  */
-export async function prepareRewardedAd(placement: AdPlacement): Promise<boolean> {
-  const admob = await getAdMob()
-  if (!admob) return false
+export async function prepareRewardedAd(_placement: AdPlacement): Promise<boolean> {
+  if (!isNative()) return false
   try {
-    await admob.AdMob.prepareRewardVideoAd({
-      adId: AD_UNIT_IDS[placement],
+    const { AdMob } = await Function('return import("@capacitor-community/admob")')()
+    await AdMob.prepareRewardVideoAd({
+      adId: 'ca-app-pub-3940256099942544/5224354917',
       isTesting: true,
     })
     return true
@@ -54,16 +37,16 @@ export async function prepareRewardedAd(placement: AdPlacement): Promise<boolean
 
 /**
  * Show a rewarded ad. Returns true if the user completed the ad and earned the reward.
+ * In browser/dev mode, auto-rewards (stub).
  */
 export async function showRewardedAd(): Promise<boolean> {
-  const admob = await getAdMob()
-  if (!admob) {
-    // Stub: auto-reward in dev/browser
+  if (!isNative()) {
     console.log('[AdService] Stub: rewarding user (no native ad plugin)')
     return true
   }
   try {
-    const result = await admob.AdMob.showRewardVideoAd()
+    const { AdMob } = await Function('return import("@capacitor-community/admob")')()
+    const result = await AdMob.showRewardVideoAd()
     return !!result
   } catch {
     return false

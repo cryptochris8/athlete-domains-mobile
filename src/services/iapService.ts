@@ -1,28 +1,21 @@
 import type { IAPProductId } from '@/types/monetization'
 
-let iapPlugin: typeof import('@capacitor-community/in-app-purchases') | null = null
-
-async function getIAP() {
-  if (iapPlugin) return iapPlugin
-  try {
-    iapPlugin = await import('@capacitor-community/in-app-purchases')
-    return iapPlugin
-  } catch {
-    return null
-  }
+// Detect if we're running in Capacitor native context
+function isNative(): boolean {
+  return 'Capacitor' in window
 }
 
 /**
- * Initialize IAP. Call once at app startup.
+ * Initialize IAP. No-op in browser.
  */
 export async function initializeIAP(): Promise<void> {
-  const iap = await getIAP()
-  if (!iap) {
-    console.log('[IAPService] No native IAP plugin available (browser mode)')
+  if (!isNative()) {
+    console.log('[IAPService] Browser mode — IAP stubbed')
     return
   }
   try {
-    await iap.InAppPurchases.initialize()
+    const { InAppPurchases } = await Function('return import("@capacitor-community/in-app-purchases")')()
+    await InAppPurchases.initialize()
   } catch (e) {
     console.warn('[IAPService] Init failed:', e)
   }
@@ -31,11 +24,11 @@ export async function initializeIAP(): Promise<void> {
 /**
  * Load product details from the App Store.
  */
-export async function loadProducts(productIds: IAPProductId[]): Promise<void> {
-  const iap = await getIAP()
-  if (!iap) return
+export async function loadProducts(_productIds: IAPProductId[]): Promise<void> {
+  if (!isNative()) return
   try {
-    await iap.InAppPurchases.getProducts({ productIds })
+    const { InAppPurchases } = await Function('return import("@capacitor-community/in-app-purchases")')()
+    await InAppPurchases.getProducts({ productIds: _productIds })
   } catch (e) {
     console.warn('[IAPService] Load products failed:', e)
   }
@@ -43,16 +36,16 @@ export async function loadProducts(productIds: IAPProductId[]): Promise<void> {
 
 /**
  * Purchase a product. Returns true on success.
+ * In browser/dev mode, auto-succeeds (stub).
  */
 export async function purchase(productId: IAPProductId): Promise<boolean> {
-  const iap = await getIAP()
-  if (!iap) {
-    // Stub: auto-purchase in dev/browser
+  if (!isNative()) {
     console.log(`[IAPService] Stub: purchasing ${productId}`)
     return true
   }
   try {
-    await iap.InAppPurchases.purchase({ productId })
+    const { InAppPurchases } = await Function('return import("@capacitor-community/in-app-purchases")')()
+    await InAppPurchases.purchase({ productId })
     return true
   } catch {
     return false
@@ -63,10 +56,10 @@ export async function purchase(productId: IAPProductId): Promise<boolean> {
  * Restore previous purchases. Returns list of restored product IDs.
  */
 export async function restorePurchases(): Promise<string[]> {
-  const iap = await getIAP()
-  if (!iap) return []
+  if (!isNative()) return []
   try {
-    const result = await iap.InAppPurchases.restorePurchases()
+    const { InAppPurchases } = await Function('return import("@capacitor-community/in-app-purchases")')()
+    const result = await InAppPurchases.restorePurchases()
     return (result as { productIds?: string[] })?.productIds ?? []
   } catch {
     return []
