@@ -19,8 +19,8 @@ export function getStarRating(game: string, score: number): number {
 }
 
 export function getGameCoins(stars: number, isNewHighScore: boolean): number {
-  const starCoins = [0, 5, 10, 15][stars] ?? 0
-  return starCoins + (isNewHighScore ? 5 : 0)
+  const starCoins = [10, 30, 50, 75][stars] ?? 10
+  return starCoins + (isNewHighScore ? 25 : 0)
 }
 
 export function getScoreLabel(_game: string, stars: number): string {

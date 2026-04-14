@@ -3,6 +3,8 @@ import type { PackType } from '@/types/monetization'
 import { getPackByType } from '@/systems/packCatalog'
 import { rollPack } from '@/services/packService'
 import { usePlayerStore } from '@/stores/usePlayerStore'
+import { syncAfterPackOpen } from '@/services/firestoreSync'
+import { trackPackOpen } from '@/services/analyticsService'
 
 interface InventoryState {
   isPackOpening: boolean
@@ -66,6 +68,16 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
       coinsFromDuplicates: result.coinsFromDuplicates,
       lastPackType: packType,
     })
+
+    // Analytics
+    trackPackOpen(packType, packDef.avatarCount)
+
+    // Fire-and-forget cloud sync
+    const updatedProfile = usePlayerStore.getState().getActiveProfile()
+    syncAfterPackOpen(
+      updatedProfile?.coins ?? 0,
+      updatedProfile?.ownedAvatarIds ?? [],
+    ).catch(() => {})
 
     return { success: true }
   },

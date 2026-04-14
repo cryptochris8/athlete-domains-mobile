@@ -4,6 +4,7 @@ import { useShopStore } from '@/stores/useShopStore'
 import { SHOP_CATALOG, type ShopItemCategory } from '@/systems/shopCatalog'
 import { audioManager } from '@/core/AudioManager'
 import { COLORS } from '@/core/constants'
+import { syncCoins } from '@/services/firestoreSync'
 
 interface ShopPanelProps {
   onClose: () => void
@@ -24,10 +25,21 @@ export function ShopPanel({ onClose }: ShopPanelProps) {
   const buyItem = useShopStore((s) => s.buyItem)
   const equipItem = useShopStore((s) => s.equipItem)
 
-  const handleBuy = (itemId: string, price: number) => {
-    const success = spendCoins(price)
+  const [confirmBuy, setConfirmBuy] = useState<{ itemId: string; price: number; name: string } | null>(null)
+
+  const handleBuy = (itemId: string, price: number, name: string) => {
+    setConfirmBuy({ itemId, price, name })
+  }
+
+  const confirmPurchase = () => {
+    if (!confirmBuy) return
+    const success = spendCoins(confirmBuy.price)
     if (!success) return
-    buyItem(itemId)
+    buyItem(confirmBuy.itemId)
+    setConfirmBuy(null)
+    // Fire-and-forget cloud sync
+    const profile = usePlayerStore.getState().getActiveProfile()
+    syncCoins(profile?.coins ?? 0).catch(() => {})
   }
   const equippedBall = useShopStore((s) => s.equippedBall)
   const equippedCelebration = useShopStore((s) => s.equippedCelebration)
@@ -187,7 +199,7 @@ export function ShopPanel({ onClose }: ShopPanelProps) {
                   </button>
                 ) : (
                   <button
-                    onClick={() => handleBuy(item.id, item.price)}
+                    onClick={() => handleBuy(item.id, item.price, item.name)}
                     disabled={!canAfford}
                     style={{
                       padding: '0.3rem 1rem',
@@ -208,6 +220,68 @@ export function ShopPanel({ onClose }: ShopPanelProps) {
             )
           })}
         </div>
+
+        {/* Purchase confirmation */}
+        {confirmBuy && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 210,
+          }}>
+            <div style={{
+              background: '#1A1A2E',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              textAlign: 'center',
+              border: `2px solid ${COLORS.primary}44`,
+              maxWidth: '300px',
+              width: '90%',
+            }}>
+              <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                Buy {confirmBuy.name}?
+              </div>
+              <div style={{ fontSize: '0.9rem', color: COLORS.accent, fontWeight: 600, marginBottom: '1rem' }}>
+                {confirmBuy.price} coins
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                <button
+                  onClick={() => setConfirmBuy(null)}
+                  style={{
+                    padding: '0.5rem 1.2rem',
+                    borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.1)',
+                    color: COLORS.white,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    minHeight: '44px',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmPurchase}
+                  style={{
+                    padding: '0.5rem 1.2rem',
+                    borderRadius: '10px',
+                    background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.accent})`,
+                    color: COLORS.dark,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    minHeight: '44px',
+                  }}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

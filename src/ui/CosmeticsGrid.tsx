@@ -4,6 +4,7 @@ import { getCosmeticsBySlot } from '@/systems/cosmeticsCatalog'
 import { RARITY_CONFIG } from '@/types/monetization'
 import { COLORS } from '@/core/constants'
 import { audioManager } from '@/core/AudioManager'
+import { syncCoins, syncEquipped } from '@/services/firestoreSync'
 
 interface CosmeticsGridProps {
   slot: 'shirt' | 'shoes'
@@ -16,30 +17,45 @@ export function CosmeticsGrid({ slot }: CosmeticsGridProps) {
   const equipCosmetic = usePlayerStore((s) => s.equipCosmetic)
 
   const [buyError, setBuyError] = useState<string | null>(null)
+  const [confirmBuy, setConfirmBuy] = useState<{ itemId: string; price: number; name: string } | null>(null)
 
   const items = getCosmeticsBySlot(slot)
   const ownedIds = profile?.ownedCosmeticIds ?? []
   const equippedId = slot === 'shirt' ? profile?.equippedShirt : profile?.equippedShoes
   const coins = profile?.coins ?? 0
 
-  const handleBuy = (itemId: string, price: number) => {
+  const handleBuy = (itemId: string, price: number, name: string) => {
     if (!profile) return
     if (coins < price) {
       setBuyError('Not enough coins!')
       setTimeout(() => setBuyError(null), 2000)
       return
     }
-    const success = spendCoins(price)
+    setConfirmBuy({ itemId, price, name })
+  }
+
+  const confirmPurchase = () => {
+    if (!confirmBuy || !profile) return
+    const success = spendCoins(confirmBuy.price)
     if (!success) return
     audioManager.play('grab')
-    // Add to owned cosmetics
-    const updated = [...ownedIds, itemId]
+    const updated = [...ownedIds, confirmBuy.itemId]
     updateProfile(profile.id, { ownedCosmeticIds: updated })
+    setConfirmBuy(null)
+    // Fire-and-forget cloud sync
+    const p = usePlayerStore.getState().getActiveProfile()
+    syncCoins(p?.coins ?? 0).catch(() => {})
   }
 
   const handleEquip = (itemId: string) => {
     audioManager.play('switchFlip')
     equipCosmetic(slot, itemId)
+    // Fire-and-forget cloud sync
+    const p = usePlayerStore.getState().getActiveProfile()
+    syncEquipped(
+      slot === 'shirt' ? itemId : p?.equippedShirt ?? null,
+      slot === 'shoes' ? itemId : p?.equippedShoes ?? null,
+    ).catch(() => {})
   }
 
   return (
@@ -171,7 +187,7 @@ export function CosmeticsGrid({ slot }: CosmeticsGridProps) {
                 )
               ) : (
                 <button
-                  onClick={() => handleBuy(item.id, item.price)}
+                  onClick={() => handleBuy(item.id, item.price, item.name)}
                   disabled={!canAfford}
                   style={{
                     padding: '0.3rem 1rem',
@@ -194,6 +210,68 @@ export function CosmeticsGrid({ slot }: CosmeticsGridProps) {
           )
         })}
       </div>
+
+      {/* Purchase confirmation */}
+      {confirmBuy && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(0,0,0,0.7)',
+          zIndex: 210,
+        }}>
+          <div style={{
+            background: '#1A1A2E',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            textAlign: 'center',
+            border: `2px solid ${COLORS.primary}44`,
+            maxWidth: '300px',
+            width: '90%',
+          }}>
+            <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              Buy {confirmBuy.name}?
+            </div>
+            <div style={{ fontSize: '0.9rem', color: COLORS.accent, fontWeight: 600, marginBottom: '1rem' }}>
+              {confirmBuy.price} coins
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+              <button
+                onClick={() => setConfirmBuy(null)}
+                style={{
+                  padding: '0.5rem 1.2rem',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.1)',
+                  color: COLORS.white,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  minHeight: '44px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPurchase}
+                style={{
+                  padding: '0.5rem 1.2rem',
+                  borderRadius: '10px',
+                  background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.accent})`,
+                  color: COLORS.dark,
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  minHeight: '44px',
+                }}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

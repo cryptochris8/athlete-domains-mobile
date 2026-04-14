@@ -50,7 +50,8 @@ export function TargetSpawner({ maxTargets, speedScale, sizeScale, paused, onTar
     if (paused) return
 
     spawnTimer.current += delta
-    if (spawnTimer.current >= ARCHERY_CONFIG.spawnIntervalSeconds && targets.length < maxTargets) {
+    const spawnInterval = ARCHERY_CONFIG.spawnIntervalSeconds / speedScale
+    if (spawnTimer.current >= spawnInterval && targets.length < maxTargets) {
       spawnTimer.current = 0
       spawnTarget()
     }

@@ -6,9 +6,9 @@ import { LEGACY_SKIN_MAP } from '@/core/constants'
 const STARTER_AVATAR_IDS = [1, 100, 250, 500, 750]
 
 const DEFAULT_PROFILES: PlayerProfile[] = [
-  { id: 1, name: 'Player 1', age: 6, avatar: '🌟', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
-  { id: 2, name: 'Player 2', age: 8, avatar: '⭐', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
-  { id: 3, name: 'Player 3', age: 8, avatar: '💫', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false },
+  { id: 1, name: 'Player 1', age: 6, avatar: '🌟', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false, founderBadge: false, claimedStarterBundle: true },
+  { id: 2, name: 'Player 2', age: 8, avatar: '⭐', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false, founderBadge: false, claimedStarterBundle: true },
+  { id: 3, name: 'Player 3', age: 8, avatar: '💫', skinId: 1, coins: 0, totalXP: 0, createdAt: 0, ownedAvatarIds: [...STARTER_AVATAR_IDS], ownedCosmeticIds: ['shirt-red', 'shoes-white'], equippedShirt: 'shirt-red', equippedShoes: 'shoes-white', adsRemoved: false, starterPackPurchased: false, founderBadge: false, claimedStarterBundle: true },
 ]
 
 interface PlayerState {

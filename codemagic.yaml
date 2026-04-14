@@ -57,6 +57,24 @@ workflows:
           npx cap add ios || true
           npx cap sync ios
 
+      # Add Sign in with Apple entitlement
+      - name: Configure entitlements
+        script: |
+          cp ios-config/App.entitlements ios/App/App/App.entitlements
+          # Add entitlement to Xcode project build settings
+          cd ios/App
+          /usr/libexec/PlistBuddy -c "Add :CODE_SIGN_ENTITLEMENTS string App/App.entitlements" \
+            App.xcodeproj/project.pbxproj 2>/dev/null || true
+          # Use Ruby to inject entitlement into pbxproj reliably
+          ruby -e '
+            path = "App.xcodeproj/project.pbxproj"
+            content = File.read(path)
+            unless content.include?("CODE_SIGN_ENTITLEMENTS")
+              content.gsub!(/CODE_SIGN_IDENTITY/, "CODE_SIGN_ENTITLEMENTS = \"App/App.entitlements\";\n\t\t\t\tCODE_SIGN_IDENTITY")
+              File.write(path, content)
+            end
+          '
+
       # Set bundle version from build number
       - name: Set iOS version
         script: |
@@ -137,6 +155,20 @@ workflows:
         script: |
           npx cap add ios || true
           npx cap sync ios
+
+      # Add Sign in with Apple entitlement
+      - name: Configure entitlements
+        script: |
+          cp ios-config/App.entitlements ios/App/App/App.entitlements
+          cd ios/App
+          ruby -e '
+            path = "App.xcodeproj/project.pbxproj"
+            content = File.read(path)
+            unless content.include?("CODE_SIGN_ENTITLEMENTS")
+              content.gsub!(/CODE_SIGN_IDENTITY/, "CODE_SIGN_ENTITLEMENTS = \"App/App.entitlements\";\n\t\t\t\tCODE_SIGN_IDENTITY")
+              File.write(path, content)
+            end
+          '
 
       - name: Install CocoaPods
         script: |

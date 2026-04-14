@@ -19,6 +19,7 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('node_modules/three/')) return 'three'
           if (id.includes('@react-three/fiber') || id.includes('@react-three/drei') || id.includes('@react-three/rapier')) return 'r3f'
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) return 'firebase'
         },
       },
     },

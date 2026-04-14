@@ -25,6 +25,8 @@ export interface PlayerProfile {
   equippedShoes: string | null
   adsRemoved: boolean
   starterPackPurchased: boolean
+  founderBadge: boolean
+  claimedStarterBundle: boolean
 }
 
 export interface Achievement {

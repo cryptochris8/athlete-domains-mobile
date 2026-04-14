@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { ALL_SPORT_KEYS, type Achievement } from '@/types'
 
 interface ProgressState {
@@ -14,7 +15,7 @@ interface ProgressState {
   clearRecentUnlocks: () => void
 }
 
-export const useProgressStore = create<ProgressState>()((set, get) => ({
+export const useProgressStore = create<ProgressState>()(persist((set, get) => ({
   unlockedGames: [...ALL_SPORT_KEYS],
   totalStars: 0,
   achievements: [],
@@ -45,4 +46,11 @@ export const useProgressStore = create<ProgressState>()((set, get) => ({
   hasAchievement: (id) => get().achievements.some((a) => a.id === id),
 
   clearRecentUnlocks: () => set({ recentUnlocks: [] }),
+}), {
+  name: 'ad-ios-progress',
+  partialize: (state) => ({
+    unlockedGames: state.unlockedGames,
+    totalStars: state.totalStars,
+    achievements: state.achievements,
+  }),
 }))

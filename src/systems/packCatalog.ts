@@ -19,7 +19,7 @@ export const PACK_CATALOG: PackDefinition[] = [
   {
     type: 'elite',
     name: 'Elite Pack',
-    price: 0,
+    price: 3500,
     avatarCount: 5,
     description: 'Contains 5 avatars (1 Epic+ guaranteed)',
     guaranteedMinRarity: 'epic',
@@ -27,7 +27,7 @@ export const PACK_CATALOG: PackDefinition[] = [
   {
     type: 'legendary',
     name: 'Legendary Pack',
-    price: 0,
+    price: 6000,
     avatarCount: 3,
     description: '1 Legendary + 2 additional avatars',
     guaranteedMinRarity: 'legendary',

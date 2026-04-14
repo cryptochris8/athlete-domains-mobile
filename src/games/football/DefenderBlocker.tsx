@@ -23,6 +23,11 @@ export const DefenderBlocker = forwardRef<DefenderHandle, DefenderBlockerProps>(
     const [animation, setAnimation] = useState<AnimationState>('charge')
     const celebrateTimer = useRef<number | null>(null)
 
+    // Juke AI state
+    const jukeTimer = useRef(1.5 + Math.random() * 2) // time until next juke
+    const speedMult = useRef(1.0) // current speed multiplier
+    const pauseTimer = useRef(0) // brief hesitation
+
     useImperativeHandle(ref, () => ({
       getPosition: () => [posX.current, 0, lane.z],
       triggerCelebrate: () => {
@@ -44,7 +49,38 @@ export const DefenderBlocker = forwardRef<DefenderHandle, DefenderBlockerProps>(
         return
       }
 
-      posX.current += dir.current * lane.speed * delta
+      // Brief pause (fake-out hesitation)
+      if (pauseTimer.current > 0) {
+        pauseTimer.current -= delta
+        return
+      }
+
+      // Juke timer — randomly change behavior
+      jukeTimer.current -= delta
+      if (jukeTimer.current <= 0) {
+        const roll = Math.random()
+        if (roll < 0.3) {
+          // Sudden direction change
+          dir.current = dir.current === 1 ? -1 : 1
+          speedMult.current = 1.2 + Math.random() * 0.8 // burst speed
+        } else if (roll < 0.5) {
+          // Brief hesitation then burst
+          pauseTimer.current = 0.15 + Math.random() * 0.25
+          speedMult.current = 1.5
+        } else if (roll < 0.7) {
+          // Speed burst in same direction
+          speedMult.current = 1.5 + Math.random() * 0.5
+        } else {
+          // Return to normal speed
+          speedMult.current = 0.7 + Math.random() * 0.6
+        }
+        jukeTimer.current = 0.8 + Math.random() * 2.0
+      }
+
+      // Gradually normalize speed multiplier
+      speedMult.current += (1.0 - speedMult.current) * delta * 2
+
+      posX.current += dir.current * lane.speed * speedMult.current * delta
 
       // Bounce at patrol boundaries
       if (posX.current > DEFENDER_CONFIG.patrolWidth) {

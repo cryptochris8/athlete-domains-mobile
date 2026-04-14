@@ -1,13 +1,13 @@
 import type { DailyRewardTier } from '@/types/monetization'
 
 export const DAILY_REWARDS: DailyRewardTier[] = [
-  { day: 1, coins: 5,  bonusCoins: 5  },
-  { day: 2, coins: 5,  bonusCoins: 5  },
-  { day: 3, coins: 10, bonusCoins: 10 },
-  { day: 4, coins: 10, bonusCoins: 10 },
-  { day: 5, coins: 15, bonusCoins: 15 },
-  { day: 6, coins: 20, bonusCoins: 20 },
-  { day: 7, coins: 30, bonusCoins: 30 },
+  { day: 1, coins: 25, bonusCoins: 25 },
+  { day: 2, coins: 25, bonusCoins: 25 },
+  { day: 3, coins: 35, bonusCoins: 35 },
+  { day: 4, coins: 35, bonusCoins: 35 },
+  { day: 5, coins: 50, bonusCoins: 50 },
+  { day: 6, coins: 60, bonusCoins: 60 },
+  { day: 7, coins: 75, bonusCoins: 75 },
 ]
 
 export function getDailyReward(streakDay: number): DailyRewardTier {

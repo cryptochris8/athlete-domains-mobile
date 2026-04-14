@@ -10,6 +10,9 @@ import { saveCurrentPlayer } from '@/core/playerScoping'
 import { useAchievementCheck } from '@/hooks/useAchievementCheck'
 import { useSoccer } from '@/games/soccer/useSoccer'
 import { showRewardedAd, prepareRewardedAd } from '@/services/adService'
+import { syncAfterMatch } from '@/services/firestoreSync'
+import { trackGameEnd, trackNewHighScore } from '@/services/analyticsService'
+import { submitScore } from '@/services/leaderboardService'
 import type { Scene } from '@/types'
 
 interface GameOverScreenProps {
@@ -89,23 +92,43 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
     }
   }
 
-  const handleBackToGames = () => {
-    audioManager.play('click')
+  const persistAndSync = () => {
     if (coinsEarned > 0) addCoins(coinsEarned)
     saveResult(game, currentScore, stars, selectedDifficulty)
     addStars(stars)
     checkAndUnlock()
     saveCurrentPlayer()
+
+    // Analytics
+    trackGameEnd(game, currentScore, stars, selectedDifficulty)
+    if (isNewHigh) {
+      trackNewHighScore(game, currentScore)
+      // Submit to leaderboard
+      const p = usePlayerStore.getState().getActiveProfile()
+      submitScore(game, currentScore, p?.name ?? 'Player', game === 'minigolf').catch(() => {})
+    }
+
+    // Fire-and-forget cloud sync
+    const profile = usePlayerStore.getState().getActiveProfile()
+    const scores = useScoreStore.getState()
+    const progress = useProgressStore.getState()
+    syncAfterMatch({
+      highScores: scores.highScores,
+      totalStars: progress.totalStars,
+      achievements: progress.achievements,
+      coins: profile?.coins ?? 0,
+    }).catch(() => {})
+  }
+
+  const handleBackToGames = () => {
+    audioManager.play('click')
+    persistAndSync()
     returnToMenu()
   }
 
   const handlePlayAgain = () => {
     audioManager.play('click')
-    if (coinsEarned > 0) addCoins(coinsEarned)
-    saveResult(game, currentScore, stars, selectedDifficulty)
-    addStars(stars)
-    checkAndUnlock()
-    saveCurrentPlayer()
+    persistAndSync()
     onPlayAgain()
   }
 

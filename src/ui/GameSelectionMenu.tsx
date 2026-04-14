@@ -3,12 +3,15 @@ import { useGameStore } from '@/stores/useGameStore'
 import { useScoreStore } from '@/stores/useScoreStore'
 import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useDailyRewardStore } from '@/stores/useDailyRewardStore'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { audioManager } from '@/core/AudioManager'
 import { COLORS } from '@/core/constants'
 import { LockerRoom } from '@/ui/LockerRoom'
 import { PackOpenScreen } from '@/ui/PackOpenScreen'
 import { ShopPanel } from '@/ui/ShopPanel'
 import { DailyRewardModal } from '@/ui/DailyRewardModal'
+import { LoginScreen } from '@/ui/LoginScreen'
+import { trackGameStart } from '@/services/analyticsService'
 import type { Scene } from '@/types'
 
 interface GameCard {
@@ -38,13 +41,16 @@ export function GameSelectionMenu() {
   const coins = usePlayerStore((s) => s.getActiveProfile()?.coins ?? 0)
   const canClaimDaily = useDailyRewardStore((s) => s.canClaim())
 
+  const user = useAuthStore((s) => s.user)
   const [showLockerRoom, setShowLockerRoom] = useState(false)
   const [showPackOpen, setShowPackOpen] = useState(false)
   const [showShop, setShowShop] = useState(false)
   const [showDailyReward, setShowDailyReward] = useState(false)
+  const [showLogin, setShowLogin] = useState(false)
 
   const handleGameSelect = (scene: Scene) => {
     audioManager.play('click')
+    trackGameStart(scene, selectedDifficulty)
     setScene(scene)
   }
 
@@ -75,18 +81,40 @@ export function GameSelectionMenu() {
         Choose your game
       </p>
 
-      {/* Coin balance */}
+      {/* Coin balance + Account */}
       <div style={{
-        display: 'inline-flex',
+        display: 'flex',
         alignItems: 'center',
-        gap: '0.3rem',
-        padding: '0.3rem 0.8rem',
-        borderRadius: '20px',
-        background: 'rgba(0,0,0,0.4)',
+        gap: '0.5rem',
         marginBottom: '1rem',
       }}>
-        <span style={{ fontSize: '1rem' }}>{'\uD83E\uDE99'}</span>
-        <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFD700' }}>{coins}</span>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.3rem',
+          padding: '0.3rem 0.8rem',
+          borderRadius: '20px',
+          background: 'rgba(0,0,0,0.4)',
+        }}>
+          <span style={{ fontSize: '1rem' }}>{'\uD83E\uDE99'}</span>
+          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#FFD700' }}>{coins}</span>
+        </div>
+        <button
+          onClick={() => { audioManager.play('click'); setShowLogin(true) }}
+          style={{
+            padding: '0.3rem 0.8rem',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            borderRadius: '20px',
+            background: user?.isAnonymous ? 'rgba(255,255,255,0.1)' : 'rgba(46,204,113,0.2)',
+            color: user?.isAnonymous ? 'rgba(255,255,255,0.6)' : '#2ECC71',
+            border: user?.isAnonymous ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(46,204,113,0.4)',
+            cursor: 'pointer',
+            minHeight: '36px',
+          }}
+        >
+          {user?.isAnonymous ? 'Guest' : user?.email?.split('@')[0] ?? 'Account'}
+        </button>
       </div>
 
       {/* Difficulty selector */}
@@ -261,6 +289,7 @@ export function GameSelectionMenu() {
       {showPackOpen && <PackOpenScreen onClose={() => setShowPackOpen(false)} />}
       {showShop && <ShopPanel onClose={() => setShowShop(false)} />}
       {showDailyReward && <DailyRewardModal onClose={() => setShowDailyReward(false)} />}
+      {showLogin && <LoginScreen onClose={() => setShowLogin(false)} />}
     </div>
   )
 }

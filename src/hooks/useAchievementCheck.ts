@@ -1,9 +1,14 @@
 import { useCallback } from 'react'
 import { useScoreStore } from '@/stores/useScoreStore'
 import { useProgressStore } from '@/stores/useProgressStore'
+import { usePlayerStore } from '@/stores/usePlayerStore'
 import { useGameStore } from '@/stores/useGameStore'
 import { checkAchievements, type AchievementContext } from '@/systems/achievements'
 import { audioManager } from '@/core/AudioManager'
+import { trackAchievementUnlock } from '@/services/analyticsService'
+
+/** Coins awarded per achievement unlock */
+const ACHIEVEMENT_REWARD = 25
 
 /**
  * Returns a function that evaluates achievement conditions
@@ -34,6 +39,8 @@ export function useAchievementCheck() {
     const newlyUnlocked = checkAchievements(ctx)
     for (const achievement of newlyUnlocked) {
       unlockAchievement(achievement)
+      usePlayerStore.getState().addCoins(ACHIEVEMENT_REWARD)
+      trackAchievementUnlock(achievement.id)
       audioManager.play('unlock')
     }
 

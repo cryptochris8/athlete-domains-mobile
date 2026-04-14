@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Scene, GameResult, Difficulty } from '@/types'
 
 const MAX_HISTORY = 500
@@ -19,7 +20,7 @@ interface ScoreState {
   getAverageScore: (game: string) => number
 }
 
-export const useScoreStore = create<ScoreState>()((set, get) => ({
+export const useScoreStore = create<ScoreState>()(persist((set, get) => ({
   currentScore: 0,
   currentStreak: 0,
   highScores: {},
@@ -69,4 +70,10 @@ export const useScoreStore = create<ScoreState>()((set, get) => ({
     if (results.length === 0) return 0
     return Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)
   },
+}), {
+  name: 'ad-ios-scores',
+  partialize: (state) => ({
+    highScores: state.highScores,
+    history: state.history,
+  }),
 }))

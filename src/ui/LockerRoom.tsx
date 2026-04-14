@@ -5,6 +5,8 @@ import { RARITY_CONFIG } from '@/types/monetization'
 import { COLORS, SPORT_TABS, type AvatarSport } from '@/core/constants'
 import { audioManager } from '@/core/AudioManager'
 import { CosmeticsGrid } from '@/ui/CosmeticsGrid'
+import { syncPlayerData } from '@/services/firestoreSync'
+import { hasFounderBadge } from '@/services/founderService'
 import type { CatalogEntry } from '@/ui/AvatarPicker'
 
 type Tab = 'avatars' | 'shirts' | 'shoes'
@@ -41,6 +43,7 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
   const updateProfile = usePlayerStore((s) => s.updateProfile)
 
   const coins = profile?.coins ?? 0
+  const isFounder = hasFounderBadge()
   const currentSkinId = profile?.skinId ?? 1
   const ownedAvatarIds = profile?.ownedAvatarIds ?? []
 
@@ -49,13 +52,21 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
   const [sport, setSport] = useState<AvatarSport | 'all'>('all')
   const [page, setPage] = useState(0)
   const [lockedTooltip, setLockedTooltip] = useState<number | null>(null)
+  const [catalogLoading, setCatalogLoading] = useState(true)
+  const [catalogError, setCatalogError] = useState(false)
 
   // Load avatar catalog on mount
   useEffect(() => {
+    setCatalogLoading(true)
+    setCatalogError(false)
     fetch('/avatar-catalog.json')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Failed to load')
+        return r.json()
+      })
       .then((data: CatalogEntry[]) => setCatalog(data))
-      .catch(() => {})
+      .catch(() => setCatalogError(true))
+      .finally(() => setCatalogLoading(false))
   }, [])
 
   const filtered = useMemo(() => filterBySport(catalog, sport), [catalog, sport])
@@ -69,6 +80,7 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
     if (ownedAvatarIds.includes(avatarId)) {
       audioManager.play('grab')
       updateProfile(profile.id, { skinId: avatarId })
+      syncPlayerData({ activeAvatarId: avatarId }).catch(() => {})
     } else {
       // Show locked tooltip
       audioManager.play('click')
@@ -134,6 +146,19 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
             }}>
               {coins} coins
             </span>
+            {isFounder && (
+              <span style={{
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                color: '#FFD700',
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: '8px',
+                padding: '0.2rem 0.6rem',
+                border: '1px solid rgba(255,215,0,0.4)',
+              }}>
+                OG Founder
+              </span>
+            )}
             <button
               onClick={() => { audioManager.play('click'); onClose() }}
               aria-label="Close locker room"
@@ -229,7 +254,40 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
                 })}
               </div>
 
+              {/* Loading / Error states */}
+              {catalogLoading && (
+                <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>Loading avatars...</div>
+              )}
+              {catalogError && (
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                  <div style={{ color: COLORS.danger, fontWeight: 600, marginBottom: '0.5rem' }}>Failed to load avatars</div>
+                  <button
+                    onClick={() => {
+                      setCatalogLoading(true)
+                      setCatalogError(false)
+                      fetch('/avatar-catalog.json')
+                        .then((r) => { if (!r.ok) throw new Error(); return r.json() })
+                        .then((data: CatalogEntry[]) => setCatalog(data))
+                        .catch(() => setCatalogError(true))
+                        .finally(() => setCatalogLoading(false))
+                    }}
+                    style={{
+                      padding: '0.4rem 1rem',
+                      borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.1)',
+                      color: COLORS.white,
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
               {/* Avatar thumbnail grid */}
+              {!catalogLoading && !catalogError && (<>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
@@ -376,6 +434,7 @@ export function LockerRoom({ onClose }: LockerRoomProps) {
                   Next
                 </button>
               </div>
+              </>)}
             </>
           )}
 

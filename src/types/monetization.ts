@@ -5,19 +5,21 @@ export const RARITY_CONFIG: Record<Rarity, {
   color: string
   coinValue: number
   dropWeight: number
-  statMultiplier: number
 }> = {
-  common:    { label: 'Common',    color: '#A0A0A0', coinValue: 2,  dropWeight: 70, statMultiplier: 1.0  },
-  rare:      { label: 'Rare',      color: '#3498DB', coinValue: 5,  dropWeight: 25, statMultiplier: 1.1  },
-  epic:      { label: 'Epic',      color: '#9B59B6', coinValue: 15, dropWeight: 4,  statMultiplier: 1.25 },
-  legendary: { label: 'Legendary', color: '#FFD700', coinValue: 40, dropWeight: 1,  statMultiplier: 1.5  },
+  common:    { label: 'Common',    color: '#A0A0A0', coinValue: 50,  dropWeight: 70 },
+  rare:      { label: 'Rare',      color: '#3498DB', coinValue: 125, dropWeight: 25 },
+  epic:      { label: 'Epic',      color: '#9B59B6', coinValue: 300, dropWeight: 4  },
+  legendary: { label: 'Legendary', color: '#FFD700', coinValue: 750, dropWeight: 1  },
 }
 
 export interface AvatarCatalogEntry {
   id: number
   sport: string
   name: string
-  rarity: Rarity
+  rarity?: Rarity
+  isStarter: boolean
+  founderCollection: boolean
+  collectionTag: string | null
 }
 
 export type CosmeticSlot = 'shirt' | 'shoes'

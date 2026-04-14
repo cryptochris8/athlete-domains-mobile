@@ -10,15 +10,15 @@ export function calculateMatchCoins(params: {
 
   // Base coins from stars
   switch (params.stars) {
-    case 1: coins = 15; break
-    case 2: coins = 25; break
-    case 3: coins = 50; break
-    default: coins = 5; break
+    case 1: coins = 30; break
+    case 2: coins = 50; break
+    case 3: coins = 75; break
+    default: coins = 10; break
   }
 
   // Win bonus
   if (params.isWin) {
-    coins += 15
+    coins += 30
   }
 
   // New high score bonus

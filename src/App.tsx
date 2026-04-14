@@ -16,6 +16,8 @@ import { MobileSoccerControls } from '@/ui/MobileSoccerControls'
 import { hideSplashScreen } from '@/core/capacitor'
 import { useDailyRewardStore } from '@/stores/useDailyRewardStore'
 import { DailyRewardModal } from '@/ui/DailyRewardModal'
+import { useFirebaseAuth } from '@/hooks/useFirebaseAuth'
+import { useOfflineSync } from '@/hooks/useOfflineSync'
 
 function SceneContent() {
   const currentScene = useGameStore((s) => s.currentScene)
@@ -54,6 +56,8 @@ function LoadingScreen() {
 const MENU_MUSIC: MusicName = 'menu'
 
 export function App() {
+  useFirebaseAuth()
+  useOfflineSync()
   useAudioSync()
   const isMobile = useTouchDevice()
   const currentScene = useGameStore((s) => s.currentScene)
