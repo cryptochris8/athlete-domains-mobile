@@ -7,6 +7,7 @@ import { useGameStore } from '@/stores/useGameStore'
 import { useMobileStore } from '@/stores/useMobileStore'
 import { BASKETBALL_CONFIG } from './config'
 import { BallTrail } from '@/components/BallTrail'
+import { hapticMedium } from '@/utils/haptics'
 
 const TRAJECTORY_DOT_COUNT = 20
 const TRAJECTORY_DURATION = 1.5 // seconds of trajectory to preview
@@ -123,7 +124,7 @@ export function BallAndShooter() {
       const vx = Math.sin(aimRad) * currentPower * 0.3
       const vy = Math.sin(angleRad) * currentPower
       const vz = -Math.cos(aimRad) * Math.cos(angleRad) * currentPower
-      const gravity = -9.81
+      const gravity = BASKETBALL_CONFIG.gravity
 
       if (trajDotsRef.current) {
         for (let i = 0; i < TRAJECTORY_DOT_COUNT; i++) {
@@ -175,18 +176,20 @@ export function BallAndShooter() {
   const mobileShootWasHeld = useRef(false)
 
   // Mobile joystick aiming + shoot in useFrame (every frame, reads store directly)
-  useFrame(() => {
+  useFrame((_, delta) => {
     const mobileState = useMobileStore.getState()
     if (!mobileState.isMobile || useGameStore.getState().gamePhase !== 'playing') return
 
     const bball = useBasketball.getState()
 
-    // Joystick X controls aim angle
+    // Joystick X controls aim angle (frame-rate independent)
     const jx = mobileState.joystickVector.x
-    if (jx !== 0 && !bball.isBallFlying) {
+    const DEADZONE = 0.12
+    if (Math.abs(jx) > DEADZONE && !bball.isBallFlying) {
       const aimSpeed = 60 // degrees per second at full tilt
+      const dt = Math.min(delta, 0.05) // cap delta to prevent huge jumps
       const newAngle = Math.max(-BASKETBALL_CONFIG.maxAimAngle, Math.min(BASKETBALL_CONFIG.maxAimAngle,
-        bball.aimAngle + jx * aimSpeed * 0.016))
+        bball.aimAngle + jx * aimSpeed * dt))
       bball.setAimAngle(newAngle)
     }
 
@@ -278,6 +281,7 @@ export function BallAndShooter() {
 
   const launchBall = useCallback((shotPower: number, shotAngle: number) => {
     if (!ballRef.current) return
+    hapticMedium()
 
     // Reset ball position
     ballRef.current.setTranslation(
@@ -339,7 +343,8 @@ export function BallAndShooter() {
         colliders="ball"
         mass={BASKETBALL_CONFIG.ballMass}
         restitution={BASKETBALL_CONFIG.ballRestitution}
-        linearDamping={0.1}
+        linearDamping={0.3}
+        friction={0.8}
         position={ballStartPosition}
         name="basketball"
       >

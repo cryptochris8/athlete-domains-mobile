@@ -430,7 +430,7 @@ export function processAIPossession(
   const aiRole = aiFormation[possessorIndex] || 'center-mid-1'
 
   const shootProb = getShootProbability(aiRole, distToGoal)
-  if (shootProb > 0 && shootRandom < shootProb * 0.02) {
+  if (shootProb > 0 && shootRandom < shootProb * 0.08) {
     const dir = getShootDirection(ballX, ballZ, goalZ, goalWidth)
     return { type: 'shoot', dirX: dir.x, dirZ: dir.z, force: POSSESSION.AI_SHOOT_FORCE, lift: POSSESSION.SHOOT_LIFT }
   }

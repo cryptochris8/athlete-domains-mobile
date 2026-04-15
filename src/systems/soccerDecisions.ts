@@ -455,8 +455,8 @@ export function getGoalkeeperDecision(ctx: MatchContext): AIDecision {
     ? ctx.ballVelocity.z < -2.0  // Attacking +Z, so shots come from +Z toward -Z
     : ctx.ballVelocity.z > 2.0   // Attacking -Z, so shots come from -Z toward +Z
 
-  // SHOT PREDICTION: If ball is moving fast toward our goal, predict intercept
-  if (ballSpeed > 2.0 && ballMovingTowardGoal) {
+  // SHOT PREDICTION: If ball is moving toward our goal, predict intercept
+  if (ballSpeed > 0.5 && ballMovingTowardGoal) {
     // Predict where ball will be in 0.3-0.5 seconds
     const predTime = clamp(0.5 - ballSpeed * 0.02, 0.3, 0.5)
     const predictedX = ctx.ballPos.x + ctx.ballVelocity.x * predTime

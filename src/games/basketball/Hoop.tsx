@@ -5,16 +5,18 @@ interface HoopProps {
   onScoreSensor: () => void
   onBackboardHit: () => void
   onRimHit: () => void
+  hoopRadiusScale?: number
 }
 
-export function Hoop({ onScoreSensor, onBackboardHit, onRimHit }: HoopProps) {
+export function Hoop({ onScoreSensor, onBackboardHit, onRimHit, hoopRadiusScale = 1 }: HoopProps) {
   const {
     hoopPosition,
-    hoopRadius,
+    hoopRadius: baseHoopRadius,
     backboardPosition,
     backboardWidth,
     backboardHeight,
   } = BASKETBALL_CONFIG
+  const hoopRadius = baseHoopRadius * hoopRadiusScale
 
   return (
     <group>
@@ -77,37 +79,20 @@ export function Hoop({ onScoreSensor, onBackboardHit, onRimHit }: HoopProps) {
         )
       })()}
 
-      {/* Rim - front segment */}
-      <RigidBody type="fixed" colliders="cuboid" onCollisionEnter={onRimHit}>
-        <mesh position={[0, hoopPosition[1], hoopPosition[2] + hoopRadius]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
-          <meshStandardMaterial color="#FF4500" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </RigidBody>
-
-      {/* Rim - left segment */}
-      <RigidBody type="fixed" colliders="cuboid" onCollisionEnter={onRimHit}>
-        <mesh position={[-hoopRadius, hoopPosition[1], hoopPosition[2]]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
-          <meshStandardMaterial color="#FF4500" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </RigidBody>
-
-      {/* Rim - right segment */}
-      <RigidBody type="fixed" colliders="cuboid" onCollisionEnter={onRimHit}>
-        <mesh position={[hoopRadius, hoopPosition[1], hoopPosition[2]]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
-          <meshStandardMaterial color="#FF4500" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </RigidBody>
-
-      {/* Rim - back segment (close to backboard) */}
-      <RigidBody type="fixed" colliders="cuboid" onCollisionEnter={onRimHit}>
-        <mesh position={[0, hoopPosition[1], hoopPosition[2] - hoopRadius]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
-          <meshStandardMaterial color="#FF4500" metalness={0.7} roughness={0.3} />
-        </mesh>
-      </RigidBody>
+      {/* Rim collision segments — 8 points around the ring to close gaps */}
+      {Array.from({ length: 8 }, (_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const x = hoopPosition[0] + Math.sin(angle) * hoopRadius
+        const z = hoopPosition[2] + Math.cos(angle) * hoopRadius
+        return (
+          <RigidBody key={`rim-${i}`} type="fixed" colliders="cuboid" restitution={0.6} friction={0.8} onCollisionEnter={onRimHit}>
+            <mesh position={[x, hoopPosition[1], z]} castShadow>
+              <cylinderGeometry args={[0.02, 0.02, 0.04, 8]} />
+              <meshStandardMaterial color="#FF4500" metalness={0.7} roughness={0.3} />
+            </mesh>
+          </RigidBody>
+        )
+      })}
 
       {/* Visual rim ring (torus - no collision, just visual) */}
       <mesh position={hoopPosition} rotation={[Math.PI / 2, 0, 0]}>
@@ -122,7 +107,14 @@ export function Hoop({ onScoreSensor, onBackboardHit, onRimHit }: HoopProps) {
       </mesh>
 
       {/* Score sensor (invisible, detects ball passing through hoop) */}
-      <RigidBody type="fixed" sensor onIntersectionEnter={onScoreSensor}>
+      {/* Only scores if ball is moving downward — prevents upward bounce false positives */}
+      <RigidBody type="fixed" sensor onIntersectionEnter={(payload) => {
+        const other = payload.other.rigidBody
+        if (other) {
+          const vel = other.linvel()
+          if (vel.y < -0.5) onScoreSensor()
+        }
+      }}>
         <CuboidCollider args={[hoopRadius * 0.7, 0.05, hoopRadius * 0.7]} position={[hoopPosition[0], hoopPosition[1] - 0.15, hoopPosition[2]]} />
       </RigidBody>
     </group>

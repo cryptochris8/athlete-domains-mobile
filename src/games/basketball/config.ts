@@ -30,6 +30,9 @@ export const BASKETBALL_CONFIG = {
   shooterCamPosition: [0, 3, 7] as [number, number, number],
   shooterCamLookAt: [0, 3, -5] as [number, number, number],
 
+  // Physics
+  gravity: -9.81,
+
   // Scoring
   swishPoints: 5,
   backboardPoints: 3,

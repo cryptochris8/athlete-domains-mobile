@@ -7,8 +7,24 @@ export function Crosshair() {
     const handleMouseMove = (e: MouseEvent) => {
       setPos({ x: e.clientX, y: e.clientY })
     }
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        setPos({ x: e.touches[0].clientX, y: e.touches[0].clientY })
+      }
+    }
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        setPos({ x: e.touches[0].clientX, y: e.touches[0].clientY })
+      }
+    }
     window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    window.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchstart', handleTouchStart)
+    }
   }, [])
 
   return (

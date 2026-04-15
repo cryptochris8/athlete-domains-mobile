@@ -1,5 +1,6 @@
-import { useRef, useImperativeHandle, forwardRef, useMemo, useCallback } from 'react'
+import { useRef, useImperativeHandle, forwardRef, useMemo, useCallback, useState } from 'react'
 import { useGLTF } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { RigidBody, CylinderCollider, type RapierRigidBody, type CollisionEnterPayload } from '@react-three/rapier'
 import { SkeletonUtils } from 'three-stdlib'
 import { BOWLING_CONFIG, getPinPositions } from './config'
@@ -20,6 +21,42 @@ export const Pins = forwardRef<PinsHandle>(function Pins(_, ref) {
   const pinRefs = useRef<(RapierRigidBody | null)[]>([])
   const positions = useRef(getPinPositions())
   const { scene } = useGLTF(PIN_MODEL_PATH)
+
+  // Pin reset animation: opacity fades for knocked pins being cleared
+  const [fadingPins, setFadingPins] = useState<Set<number>>(new Set())
+  const fadeProgress = useRef<Map<number, number>>(new Map())
+
+  useFrame((_, delta) => {
+    if (fadingPins.size === 0) return
+    let anyDone = false
+    fadingPins.forEach((pinIdx) => {
+      const current = fadeProgress.current.get(pinIdx) ?? 0
+      const next = current + delta * 3 // fade over ~0.33s
+      fadeProgress.current.set(pinIdx, next)
+      if (next >= 1) {
+        // Fade complete — move pin away
+        const pinRef = pinRefs.current[pinIdx]
+        if (pinRef) {
+          pinRef.setTranslation({ x: 5, y: -2, z: positions.current[pinIdx][2] }, true)
+          pinRef.setLinvel({ x: 0, y: 0, z: 0 }, true)
+          pinRef.setAngvel({ x: 0, y: 0, z: 0 }, true)
+        }
+        anyDone = true
+      }
+    })
+    if (anyDone) {
+      setFadingPins((prev) => {
+        const next = new Set(prev)
+        next.forEach((idx) => {
+          if ((fadeProgress.current.get(idx) ?? 0) >= 1) {
+            next.delete(idx)
+            fadeProgress.current.delete(idx)
+          }
+        })
+        return next
+      })
+    }
+  })
 
   // Throttled pin-to-pin crash sound — plays when pins collide with each other
   const lastPinCrashTime = useRef(0)
@@ -62,8 +99,9 @@ export const Pins = forwardRef<PinsHandle>(function Pins(_, ref) {
       })
     },
     resetUnknocked: () => {
-      // Keep knocked pins away, reset standing pins
+      // Keep knocked pins — animate them fading away, reset standing pins
       const pos = positions.current
+      const toFade = new Set<number>()
       pinRefs.current.forEach((pinRef, i) => {
         if (!pinRef) return
         const rotation = pinRef.rotation()
@@ -75,12 +113,12 @@ export const Pins = forwardRef<PinsHandle>(function Pins(_, ref) {
           pinRef.setLinvel({ x: 0, y: 0, z: 0 }, true)
           pinRef.setAngvel({ x: 0, y: 0, z: 0 }, true)
         } else {
-          // Knocked - move out of the way
-          pinRef.setTranslation({ x: 5, y: -2, z: pos[i][2] }, true)
-          pinRef.setLinvel({ x: 0, y: 0, z: 0 }, true)
-          pinRef.setAngvel({ x: 0, y: 0, z: 0 }, true)
+          // Knocked - start fade animation (useFrame will move them away)
+          toFade.add(i)
+          fadeProgress.current.set(i, 0)
         }
       })
+      if (toFade.size > 0) setFadingPins(toFade)
     },
   }))
 
@@ -95,7 +133,7 @@ export const Pins = forwardRef<PinsHandle>(function Pins(_, ref) {
           restitution={BOWLING_CONFIG.pinRestitution}
           colliders={false}
           linearDamping={0.05}
-          angularDamping={0.05}
+          angularDamping={BOWLING_CONFIG.pinAngularDamping ?? 0.15}
           friction={0.3}
           onCollisionEnter={handlePinCollision}
         >

@@ -191,6 +191,7 @@ function BasketballGame() {
           onScoreSensor={handleScore}
           onBackboardHit={registerBackboardHit}
           onRimHit={registerRimHit}
+          hoopRadiusScale={config.hoopRadiusScale}
         />
         <BallAndShooter />
         <GameAvatar position={[BASKETBALL_CONFIG.ballStartPosition[0], 0, BASKETBALL_CONFIG.ballStartPosition[2] + 0.5]} rotationY={0} animation={avatarAnimation} />

@@ -455,7 +455,15 @@ function SoccerMatchGame() {
     } else {
       camera.position.lerp(camTarget, camLerp)
     }
-    camera.lookAt(pos.x, pos.y + HUB.cameraHeightOffset, pos.z)
+    // Look between player and ball for better field awareness
+    if (ballRef.current) {
+      const ballPos = ballRef.current.translation()
+      const lookX = pos.x * 0.7 + ballPos.x * 0.3
+      const lookZ = pos.z * 0.7 + ballPos.z * 0.3
+      camera.lookAt(lookX, pos.y + HUB.cameraHeightOffset, lookZ)
+    } else {
+      camera.lookAt(pos.x, pos.y + HUB.cameraHeightOffset, pos.z)
+    }
 
     // ─── Possession & AI movement ──────────────────────────
     if (gamePhase !== 'playing') return
@@ -902,6 +910,27 @@ function SoccerMatchGame() {
             hasPhysics={i === 0}
           />
         ))}
+        {/* Pass target indicator ring — shows on teammate who would receive the pass */}
+        {passTarget.current && (() => {
+          const team = passTarget.current!.team
+          const idx = passTarget.current!.index
+          const targets = aiTargets.current[team]
+          const tp = targets[idx]
+          if (!tp) return null
+          return (
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[tp.x, 0.1, tp.z]}>
+              <ringGeometry args={[1.0, 1.3, 24]} />
+              <meshStandardMaterial
+                color="#4FC3F7"
+                emissive="#4FC3F7"
+                emissiveIntensity={0.8}
+                transparent
+                opacity={0.5}
+                side={2}
+              />
+            </mesh>
+          )
+        })()}
       </PhysicsProvider>
 
       {/* Goal celebration confetti */}

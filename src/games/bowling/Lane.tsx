@@ -3,6 +3,48 @@ import * as THREE from 'three'
 import { RigidBody } from '@react-three/rapier'
 import { BOWLING_CONFIG } from './config'
 
+/** Procedural wood grain texture for the bowling lane */
+function createWoodTexture(): THREE.CanvasTexture {
+  const w = 256, h = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
+
+  // Base maple color
+  ctx.fillStyle = '#DEB887'
+  ctx.fillRect(0, 0, w, h)
+
+  // Board planks — subtle alternating shading
+  const boardCount = 10
+  const boardW = w / boardCount
+  for (let i = 0; i < boardCount; i++) {
+    const shade = i % 2 === 0 ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.03)'
+    ctx.fillStyle = shade
+    ctx.fillRect(i * boardW, 0, boardW, h)
+    // Board seam line
+    ctx.fillStyle = 'rgba(160,130,70,0.3)'
+    ctx.fillRect(i * boardW, 0, 1, h)
+  }
+
+  // Grain lines running lengthwise
+  ctx.strokeStyle = 'rgba(180,140,80,0.15)'
+  ctx.lineWidth = 0.5
+  for (let i = 0; i < 60; i++) {
+    const x = Math.random() * w
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.bezierCurveTo(x + (Math.random() - 0.5) * 8, h * 0.33, x + (Math.random() - 0.5) * 8, h * 0.66, x + (Math.random() - 0.5) * 4, h)
+    ctx.stroke()
+  }
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = THREE.RepeatWrapping
+  tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(1, 1)
+  return tex
+}
+
 // Lane surface height: box is 0.1 thick rotated -PI/2 at y=0, so surface is at y=0.05
 const LANE_SURFACE_Y = 0.052 // slightly above actual surface to prevent z-fighting
 
@@ -29,6 +71,7 @@ export function Lane({ hasBumpers = false }: LaneProps) {
   const { laneLength, laneWidth, gutterWidth } = BOWLING_CONFIG
 
   const arrowShape = useMemo(() => createArrowShape(1), [])
+  const woodTexture = useMemo(() => createWoodTexture(), [])
 
   // Board line positions (alternating light/dark strips)
   const boardLines = useMemo(() => {
@@ -46,7 +89,7 @@ export function Lane({ hasBumpers = false }: LaneProps) {
       <RigidBody type="fixed" colliders="cuboid" friction={0.15} restitution={0.1}>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
           <boxGeometry args={[laneWidth, laneLength, 0.1]} />
-          <meshStandardMaterial color="#DEB887" roughness={0.3} />
+          <meshStandardMaterial map={woodTexture} color="#DEB887" roughness={0.25} />
         </mesh>
       </RigidBody>
 

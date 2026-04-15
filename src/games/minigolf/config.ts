@@ -19,7 +19,7 @@ export const MINIGOLF_CONFIG = {
   ballRadius: 0.025,
   ballMass: 0.046,
   ballRestitution: 0.5,
-  ballLinearDamping: 1.2,
+  ballLinearDamping: 0.5,
   maxPuttPower: 18,
   minPuttPower: 0.3,
   holeSinkMaxSpeed: 2.0,
@@ -95,7 +95,9 @@ export const COURSES: HoleConfig[] = [
       // Interior wall forces the ball to go around
       { position: [-0.1, 0.1, -0.5], size: [0.8, 0.2, 0.1] },
     ],
-    obstacles: [],
+    obstacles: [
+      { type: 'ramp', position: [0.2, 0, 1.5], size: [0.8, 0.12, 0.8] },
+    ],
     funFact: 'A group of flamingos is called a "flamboyance"!',
   },
 
@@ -140,8 +142,9 @@ export const COURSES: HoleConfig[] = [
     courseWidth: STD_WIDTH, courseLength: STD_LENGTH,
     walls: [...STD_WALLS],
     obstacles: [
+      { type: 'ramp', position: [0, 0, 0.5], size: [1.0, 0.12, 0.8] },
+      { type: 'water', position: [0.3, 0, -1.5], size: [0.5, 0.01, 0.6] },
       { type: 'bumper', position: [-0.3, 0.08, -0.5] },
-      { type: 'bumper', position: [0.3, 0.08, -1.5] },
     ],
     funFact: 'The ocean covers more than 70% of Earth\'s surface!',
   },
@@ -167,7 +170,9 @@ export const COURSES: HoleConfig[] = [
       { position: [0.1, 0.1, -1.8], size: [0.7, 0.2, 0.1] },
     ],
     obstacles: [
-      { type: 'bumper', position: [0, 0.08, 0.5] },
+      { type: 'ramp', position: [0, 0, 1.5], size: [0.8, 0.12, 0.8] },
+      { type: 'water', position: [-0.3, 0, -1.2], size: [0.4, 0.01, 0.5] },
+      { type: 'bumper', position: [0.3, 0.08, 0.5] },
     ],
     funFact: 'The deepest point in the ocean is the Mariana Trench at 36,000 feet!',
   },

@@ -38,10 +38,10 @@ export function useMatchTimer(callbacks: MatchTimerCallbacks) {
     ) => {
       const ms = matchRef.current.status
 
-      // Halftime pause — wait 5 seconds then start second half
+      // Halftime pause — wait 8 seconds then start second half
       if (ms === 'halftime') {
         halftimeTimer.current += delta
-        if (halftimeTimer.current > 5) {
+        if (halftimeTimer.current > 8) {
           halftimeTimer.current = 0
           const next = startSecondHalf(matchRef.current)
           matchRef.current = next

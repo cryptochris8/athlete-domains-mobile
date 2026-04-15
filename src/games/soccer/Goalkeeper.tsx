@@ -86,7 +86,7 @@ export function Goalkeeper({ difficulty, ballAimX, ballAimY, isBallKicked, isSlo
 
       // Visual dive tilt: lean toward dive direction
       if (meshGroupRef.current) {
-        const tilt = Math.sign(targetX.current - pos.x) * Math.min(Math.abs(targetX.current - pos.x) * 0.15, 0.52)
+        const tilt = Math.sign(targetX.current - pos.x) * Math.min(Math.abs(targetX.current - pos.x) * 0.2, 1.05)
         meshGroupRef.current.rotation.z = THREE.MathUtils.lerp(meshGroupRef.current.rotation.z, tilt, 0.1)
       }
     } else if (!isBallKicked) {

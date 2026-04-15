@@ -14,7 +14,7 @@ interface FootballProjectileProps {
 }
 
 const FLIGHT_DURATION = 0.35
-const SPIRAL_SPEED = 15 // radians per second (~2.4 rotations/sec)
+const SPIRAL_SPEED = 4 // radians per second (~0.6 rotations over flight)
 
 // Reusable vectors — hoisted to module level to avoid per-frame GC
 const _tangent = new THREE.Vector3()

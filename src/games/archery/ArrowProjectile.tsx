@@ -10,7 +10,8 @@ interface ArrowProjectileProps {
   onComplete: () => void
 }
 
-const FLIGHT_DURATION = 0.3 // seconds
+const FLIGHT_DURATION = 0.4 // seconds
+const ARC_HEIGHT = 0.6 // parabolic arc peak
 
 /**
  * Visual arrow that flies from startPosition to endPosition over 0.3s.
@@ -41,8 +42,9 @@ export function ArrowProjectile({ startPosition, endPosition, onComplete }: Arro
     elapsedRef.current += delta
     const t = Math.min(elapsedRef.current / FLIGHT_DURATION, 1)
 
-    // Lerp position only — rotation stays fixed
+    // Lerp position with parabolic arc for natural arrow flight
     group.position.lerpVectors(start, end, t)
+    group.position.y += Math.sin(t * Math.PI) * ARC_HEIGHT * (1 - t) // arc decays toward target
 
     if (t >= 1 && !completedRef.current) {
       completedRef.current = true

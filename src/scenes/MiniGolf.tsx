@@ -209,8 +209,8 @@ function GolfBall() {
       bz + dirZ * lookAhead
     )
 
-    // Smooth lerp: faster settle during aiming, slower follow during rolling
-    const lerpSpeed = phase === 'rolling' ? 0.04 : 0.08
+    // Smooth lerp: faster follow during rolling, snappy settle during aiming
+    const lerpSpeed = phase === 'rolling' ? 0.12 : 0.08
     camera.position.lerp(camTarget.current, lerpSpeed)
     camera.lookAt(camLookTarget.current)
 
@@ -313,12 +313,24 @@ function GolfBall() {
         const { dirX, dirZ, power } = releasePutt()
         if (power > 0 && ballRef.current) {
           audioManager.play('putt')
+          try { navigator.vibrate?.(15) } catch { /* unsupported */ }
           ballRef.current.setLinvel({
             x: dirX * power,
             y: 0,
             z: dirZ * power,
           }, true)
         }
+      }
+    }
+
+    // Cancel drag if pointer is interrupted (e.g., system notification)
+    const handlePointerCancel = () => {
+      if (isDragging) {
+        useMinigolf.getState().updateDrag(
+          useMinigolf.getState().dragStartX,
+          useMinigolf.getState().dragStartY,
+        )
+        releasePutt() // release with zero power (cancels cleanly)
       }
     }
 
@@ -354,11 +366,13 @@ function GolfBall() {
     window.addEventListener('pointerdown', handlePointerDown)
     window.addEventListener('pointermove', handlePointerMove)
     window.addEventListener('pointerup', handlePointerUp)
+    window.addEventListener('pointercancel', handlePointerCancel)
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
+      window.removeEventListener('pointercancel', handlePointerCancel)
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [phase, isDragging, startDrag, updateDrag, releasePutt])

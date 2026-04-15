@@ -18,8 +18,9 @@ export const BOWLING_CONFIG = {
   // Pins — tuned for realistic pin carry and chain reactions
   pinHeight: 0.38,
   pinRadius: 0.06,
-  pinMass: 0.4,           // Lighter pins = more knockdown energy transfer (real: ~1.5kg for 6kg ball)
-  pinRestitution: 0.45,   // Lower bounce, more energy absorbed into knockdown motion
+  pinMass: 0.7,           // Heavier pins feel more satisfying (real: ~1.5kg for 6kg ball)
+  pinRestitution: 0.3,    // Lower bounce = more energy absorbed into knockdown motion
+  pinAngularDamping: 0.15, // Settle faster after being hit
   pinSpacing: 0.30,
   pinStartZ: -7,
 

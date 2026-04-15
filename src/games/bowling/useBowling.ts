@@ -71,9 +71,81 @@ export const useBowling = create<BowlingState>((set, get) => ({
   },
 
   endBall: () => {
-    const { pinsKnocked, ballsThisFrame, hasExtraBall, frameBalls } = get()
+    const { pinsKnocked, ballsThisFrame, hasExtraBall, frameBalls, currentFrame, effectiveTotalFrames } = get()
     const knockedCount = pinsKnocked.filter(Boolean).length
+    const isFinalFrame = currentFrame === effectiveTotalFrames
 
+    // ── 10th (final) frame special rules ──
+    // Strike or spare in final frame grants bonus balls (up to 3 total)
+    if (isFinalFrame) {
+      if (ballsThisFrame === 1 && knockedCount === 10) {
+        // Final frame strike — get 2 more balls, reset pins
+        set((s) => ({
+          phase: 'positioning',
+          isStrike: true,
+          isSpare: false,
+          pinsKnocked: Array(10).fill(false),
+          totalPinsThisFrame: 0,
+          frameBalls: [...s.frameBalls, [10]],
+        }))
+        return
+      }
+      if (ballsThisFrame === 2 && knockedCount === 10) {
+        // Final frame spare on ball 2 — get 1 more ball, reset pins
+        const ball1 = frameBalls[frameBalls.length - 1]?.[0] ?? 0
+        set((s) => ({
+          phase: 'positioning',
+          isSpare: true,
+          isStrike: false,
+          pinsKnocked: Array(10).fill(false),
+          totalPinsThisFrame: 0,
+          frameBalls: [...s.frameBalls.slice(0, -1), [ball1, 10 - ball1]],
+        }))
+        return
+      }
+      if (ballsThisFrame === 2 && frameBalls[frameBalls.length - 1]?.[0] === 10) {
+        // Ball 2 after a final-frame strike — check if another strike
+        if (knockedCount === 10) {
+          // Double strike — get 1 more ball, reset pins
+          set((s) => ({
+            phase: 'positioning',
+            isStrike: true,
+            pinsKnocked: Array(10).fill(false),
+            totalPinsThisFrame: 0,
+            frameBalls: [...s.frameBalls, [10]],
+          }))
+          return
+        }
+        // Not a strike — record and get bonus ball
+        set((s) => ({
+          phase: 'positioning',
+          frameBalls: [...s.frameBalls, [knockedCount]],
+        }))
+        return
+      }
+      if (ballsThisFrame >= 3 || (ballsThisFrame >= 2 && !get().isStrike && !get().isSpare)) {
+        // Final frame complete — record and end
+        const lastFrame = frameBalls[frameBalls.length - 1] ?? []
+        const totalKnocked = knockedCount
+        if (lastFrame.length < 2) {
+          const ball1 = lastFrame[0] ?? 0
+          set((s) => ({
+            phase: 'frameover',
+            frameScores: [...s.frameScores, totalKnocked * BOWLING_CONFIG.pinPoint],
+            frameBalls: [...s.frameBalls.slice(0, -1), [ball1, knockedCount - ball1]],
+          }))
+        } else {
+          set((s) => ({
+            phase: 'frameover',
+            frameScores: [...s.frameScores, totalKnocked * BOWLING_CONFIG.pinPoint],
+            frameBalls: [...s.frameBalls, [knockedCount - (lastFrame.reduce((a: number, b: number) => a + b, 0))]],
+          }))
+        }
+        return
+      }
+    }
+
+    // ── Standard frames 1-9 ──
     if (knockedCount === 10 && ballsThisFrame === 1) {
       // Strike!
       const score = BOWLING_CONFIG.strikePoints

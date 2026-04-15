@@ -102,8 +102,8 @@ export function BowlingBall({ onBallStopped }: BowlingBallProps) {
       const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z)
       const pos = ballRef.current.translation()
 
-      // Ball stopped or fell off lane
-      if (speed < 0.1 || pos.y < -1 || pos.z < -9) {
+      // Ball stopped or fell off lane or reached pin area
+      if (speed < 0.1 || pos.y < -1 || pos.z < BOWLING_CONFIG.pinStartZ - 2) {
         ballStopReported.current = true
         audioManager.stop('bowlRoll')
         onBallStopped()
@@ -138,7 +138,7 @@ export function BowlingBall({ onBallStopped }: BowlingBallProps) {
 
   // Mobile controls: joystick for positioning, shoot button to advance phases
   const mobileShootWasHeld = useRef(false)
-  useFrame(() => {
+  useFrame((_, delta) => {
     const mobileState = useMobileStore.getState()
     if (!mobileState.isMobile || useGameStore.getState().gamePhase !== 'playing') return
 
@@ -146,9 +146,10 @@ export function BowlingBall({ onBallStopped }: BowlingBallProps) {
 
     // Joystick X controls lane position during positioning phase
     const jx = mobileState.joystickVector.x
-    if (jx !== 0 && bowlState.phase === 'positioning') {
+    if (Math.abs(jx) > 0.1 && bowlState.phase === 'positioning') {
       const maxX = BOWLING_CONFIG.laneWidth * 0.45
-      const newX = Math.max(-maxX, Math.min(maxX, bowlState.bowlerX + jx * 0.02))
+      const dt = Math.min(delta, 0.05)
+      const newX = Math.max(-maxX, Math.min(maxX, bowlState.bowlerX + jx * 1.2 * dt))
       setBowlerX(newX)
     }
 
@@ -239,7 +240,7 @@ export function BowlingBall({ onBallStopped }: BowlingBallProps) {
         colliders="ball"
         mass={BOWLING_CONFIG.ballMass}
         restitution={BOWLING_CONFIG.ballRestitution}
-        linearDamping={0.15}
+        linearDamping={0.09}
         position={ballStartPosition}
         name="bowlingball"
         onCollisionEnter={handleCollision}

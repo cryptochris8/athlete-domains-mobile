@@ -97,7 +97,7 @@ export function Target({ targetType, startPosition, direction, speedScale, sizeS
     <group ref={groupRef} position={startPosition}>
       {/* Invisible hit box — generous size for easy clicking */}
       <mesh onPointerUp={handleClick} visible={false} position={[0, hitboxSize * 1.2, 0]}>
-        <boxGeometry args={[hitboxSize * 3, hitboxSize * 3, hitboxSize * 3]} />
+        <boxGeometry args={[hitboxSize * 2.2, hitboxSize * 2.2, hitboxSize * 2.2]} />
         <meshBasicMaterial />
       </mesh>
 
