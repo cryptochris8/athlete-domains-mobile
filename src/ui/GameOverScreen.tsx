@@ -13,6 +13,7 @@ import { showRewardedAd, prepareRewardedAd } from '@/services/adService'
 import { syncAfterMatch } from '@/services/firestoreSync'
 import { trackGameEnd, trackNewHighScore } from '@/services/analyticsService'
 import { submitScore } from '@/services/leaderboardService'
+import { hapticSuccess, hapticMedium } from '@/utils/haptics'
 import type { Scene } from '@/types'
 
 interface GameOverScreenProps {
@@ -69,7 +70,7 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
     for (let i = 1; i <= stars; i++) {
-      timers.push(setTimeout(() => setRevealedStars(i), 1200 + i * 400))
+      timers.push(setTimeout(() => { setRevealedStars(i); hapticMedium() }, 1200 + i * 400))
     }
     return () => timers.forEach(clearTimeout)
   }, [stars])
@@ -102,6 +103,7 @@ export function GameOverScreen({ game, onPlayAgain }: GameOverScreenProps) {
     // Analytics
     trackGameEnd(game, currentScore, stars, selectedDifficulty)
     if (isNewHigh) {
+      hapticSuccess()
       trackNewHighScore(game, currentScore)
       // Submit to leaderboard
       const p = usePlayerStore.getState().getActiveProfile()

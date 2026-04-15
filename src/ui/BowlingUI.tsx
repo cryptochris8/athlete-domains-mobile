@@ -65,6 +65,15 @@ export function BowlingOverlay() {
           const isStrikeFrame = ball1 === 10
           const isSpareFrame = !isStrikeFrame && ball1 !== undefined && ball2 !== undefined && ball1 + ball2 === 10
 
+          const isJustCompleted = i === currentFrame - 2 && (isStrikeFrame || isSpareFrame)
+          const bgColor = isStrikeFrame
+            ? 'rgba(46,204,113,0.12)'
+            : isSpareFrame
+              ? 'rgba(79,195,247,0.12)'
+              : i === currentFrame - 1
+                ? 'rgba(247,201,72,0.15)'
+                : 'transparent'
+
           return (
             <div key={i} style={{
               width: '36px',
@@ -72,17 +81,19 @@ export function BowlingOverlay() {
               borderRadius: '4px',
               textAlign: 'center',
               padding: '2px',
-              background: i === currentFrame - 1 ? 'rgba(247,201,72,0.15)' : 'transparent',
+              background: bgColor,
+              transition: 'background 0.4s ease, border-color 0.3s ease',
+              animation: isJustCompleted ? 'pulse 1s ease-in-out' : undefined,
             }}>
               <div style={{ fontSize: '0.55rem', opacity: 0.5, marginBottom: '1px' }}>{i + 1}</div>
               <div style={{ fontSize: '0.7rem', height: '16px', display: 'flex', justifyContent: 'center', gap: '2px' }}>
                 {isStrikeFrame ? (
-                  <span style={{ color: '#2ECC71', fontWeight: 700 }}>X</span>
+                  <span style={{ color: '#2ECC71', fontWeight: 700, textShadow: '0 0 6px rgba(46,204,113,0.6)' }}>X</span>
                 ) : (
                   <>
                     <span>{ball1 !== undefined ? (ball1 === 0 ? '-' : ball1) : ''}</span>
                     {isSpareFrame ? (
-                      <span style={{ color: '#4FC3F7', fontWeight: 700 }}>/</span>
+                      <span style={{ color: '#4FC3F7', fontWeight: 700, textShadow: '0 0 6px rgba(79,195,247,0.6)' }}>/</span>
                     ) : (
                       <span>{ball2 !== undefined ? (ball2 === 0 ? '-' : ball2) : ''}</span>
                     )}
@@ -95,6 +106,7 @@ export function BowlingOverlay() {
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 paddingTop: '1px',
                 minHeight: '14px',
+                transition: 'opacity 0.5s ease',
               }}>
                 {score !== null && score !== undefined ? score : ''}
               </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useCallback, useRef, useReducer, useState } from 'react'
 import { useGameStore } from '@/stores/useGameStore'
 import { useScoreStore } from '@/stores/useScoreStore'
 import { audioManager } from '@/core/AudioManager'
@@ -10,28 +10,42 @@ interface Popup {
   color: string
 }
 
+type PopupAction =
+  | { type: 'add'; popup: Popup }
+  | { type: 'remove'; id: number }
+  | { type: 'clear' }
+
+function popupReducer(state: Popup[], action: PopupAction): Popup[] {
+  switch (action.type) {
+    case 'add': return [...state, action.popup]
+    case 'remove': return state.filter((p) => p.id !== action.id)
+    case 'clear': return []
+  }
+}
+
 export function useGameSession() {
   const setGamePhase = useGameStore((s) => s.setGamePhase)
   const resetCurrentScore = useScoreStore((s) => s.resetCurrentScore)
 
-  const [popups, setPopups] = useState<Popup[]>([])
+  const [popups, dispatch] = useReducer(popupReducer, [])
   const [showConfetti, setShowConfetti] = useState(false)
   const popupId = useRef(0)
 
   const initGame = useCallback((resetGameFn: () => void) => {
     resetCurrentScore()
     resetGameFn()
+    dispatch({ type: 'clear' })
     setGamePhase('playing')
   }, [resetCurrentScore, setGamePhase])
 
   const addPopup = useCallback((text: string, position: [number, number, number], color: string) => {
     const id = ++popupId.current
-    setPopups((prev) => [...prev, { id, text, position, color }])
+    dispatch({ type: 'add', popup: { id, text, position, color } })
     return id
   }, [])
 
   const removePopup = useCallback((id: number) => {
-    setPopups((prev) => prev.filter((p) => p.id !== id))
+    dispatch({ type: 'remove', id })
   }, [])
 
   const triggerConfetti = useCallback((durationMs = 3000) => {

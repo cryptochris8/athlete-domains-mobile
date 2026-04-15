@@ -22,7 +22,7 @@ export function MinigolfOverlay() {
   const dragDistance = isDragging
     ? Math.sqrt((dragStartX - dragEndX) ** 2 + (dragStartY - dragEndY) ** 2)
     : 0
-  const powerRatio = Math.min(dragDistance * 0.05 / MINIGOLF_CONFIG.maxPuttPower, 1)
+  const powerRatio = Math.min(dragDistance * 0.1 / MINIGOLF_CONFIG.maxPuttPower, 1)
   const powerColor = powerRatio < 0.4 ? '#2ECC71' : powerRatio < 0.7 ? '#F7C948' : '#E74C3C'
 
   const { handlePlayAgain } = useOverlayHandlers(resetGame)
