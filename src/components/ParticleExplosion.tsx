@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { useMobileStore } from '@/stores/useMobileStore'
 
 interface ParticleExplosionProps {
   position: [number, number, number]
@@ -18,10 +19,12 @@ interface ParticleExplosionProps {
 export function ParticleExplosion({
   position,
   color = '#F7C948',
-  count = 20,
+  count: rawCount = 20,
   duration = 1,
   onComplete,
 }: ParticleExplosionProps) {
+  const isMobile = useMobileStore((s) => s.isMobile)
+  const count = isMobile ? Math.min(rawCount, 12) : rawCount
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const startTime = useRef(-1)
 
@@ -39,9 +42,16 @@ export function ParticleExplosion({
 
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const particleColor = useMemo(() => new THREE.Color(color), [color])
+  const colorSet = useRef(false)
 
   useFrame((state) => {
     if (!meshRef.current) return
+    // Set instance colors once (not every frame)
+    if (!colorSet.current && meshRef.current.instanceColor) {
+      for (let i = 0; i < count; i++) meshRef.current.setColorAt(i, particleColor)
+      meshRef.current.instanceColor.needsUpdate = true
+      colorSet.current = true
+    }
     if (startTime.current < 0) startTime.current = state.clock.elapsedTime
     const elapsed = state.clock.elapsedTime - startTime.current
 
@@ -62,10 +72,8 @@ export function ParticleExplosion({
       dummy.scale.setScalar(Math.max(0, 1 - progress))
       dummy.updateMatrix()
       meshRef.current!.setMatrixAt(i, dummy.matrix)
-      meshRef.current!.setColorAt(i, particleColor)
     })
     meshRef.current.instanceMatrix.needsUpdate = true
-    if (meshRef.current.instanceColor) meshRef.current.instanceColor.needsUpdate = true
   })
 
   return (

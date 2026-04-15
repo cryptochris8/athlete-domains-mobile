@@ -2,6 +2,7 @@ import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { useMobileStore } from '@/stores/useMobileStore'
 
 interface ConfettiProps {
   position: [number, number, number]
@@ -10,6 +11,8 @@ interface ConfettiProps {
 
 export function Confetti({ position, count = 50 }: ConfettiProps) {
   const reducedMotion = useReducedMotion()
+  const isMobile = useMobileStore((s) => s.isMobile)
+  count = isMobile ? Math.min(count, 25) : count
   const meshRef = useRef<THREE.InstancedMesh>(null)
   const startClock = useRef(-1)
 

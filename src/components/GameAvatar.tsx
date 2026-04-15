@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useEffect } from 'react'
+import { Suspense, useMemo, useEffect, memo } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { HytopiaAvatar, type AnimationState } from '@/components/HytopiaAvatar'
@@ -33,13 +33,13 @@ interface GameAvatarProps {
  * In-game avatar that renders a HytopiaAvatar with the active player's skin.
  * Pure visual — no physics body or collider.
  */
-export function GameAvatar({ position, rotationY, scale = 1, animation, showBow = false }: GameAvatarProps) {
+export const GameAvatar = memo(function GameAvatar({ position, rotationY, scale = 1, animation, showBow = false }: GameAvatarProps) {
   const skinId = usePlayerStore((s) => {
     const profile = s.profiles.find((p) => p.id === s.activeProfileId)
     return profile?.skinId
   })
 
-  const skinUrl = getAvatarSkin(skinId)
+  const skinUrl = useMemo(() => getAvatarSkin(skinId), [skinId])
 
   return (
     <Suspense fallback={null}>
@@ -49,7 +49,7 @@ export function GameAvatar({ position, rotationY, scale = 1, animation, showBow 
       </group>
     </Suspense>
   )
-}
+})
 
 /** Small bow model positioned near the avatar's right hand */
 function AvatarBow() {

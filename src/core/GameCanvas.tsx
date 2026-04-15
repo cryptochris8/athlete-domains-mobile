@@ -25,10 +25,12 @@ export function GameCanvas({ children }: GameCanvasProps) {
     ? [quality.dpr[0], Math.min(quality.dpr[1], 1.5)]
     : quality.dpr
   const antialias = isMobile ? false : quality.antialias
+  // Disable shadows on mobile — reduces draw calls by ~50%
+  const shadows = isMobile ? false : quality.shadows
 
   return (
     <Canvas
-      shadows={quality.shadows}
+      shadows={shadows}
       dpr={dpr}
       camera={{
         fov: CAMERA.fov,
