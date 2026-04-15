@@ -1,0 +1,69 @@
+{
+  "starterAvatars": ["starter_male_01", "starter_female_01", "starter_neutral_01"],
+  "starterCosmetics": {
+    "shirts": ["shirt_basic_white"],
+    "shoes": ["shoes_basic_black"]
+  },
+  "economy": {
+    "matchCompletionCoins": 100,
+    "winBonusCoins": 50,
+    "dailyRewardCoins": 150,
+    "duplicateConversionCoins": {
+      "common": 100,
+      "rare": 250,
+      "epic": 600,
+      "legendary": 1500
+    }
+  },
+  "packs": {
+    "basic": {
+      "enabled": true,
+      "priceCoins": 500,
+      "itemCount": 1,
+      "guaranteedRarity": null,
+      "odds": {
+        "common": 0.7,
+        "rare": 0.25,
+        "epic": 0.04,
+        "legendary": 0.01
+      }
+    },
+    "pro": {
+      "enabled": true,
+      "priceCoins": 1500,
+      "priceUSD": "0.99",
+      "itemCount": 3,
+      "guaranteedRarity": "rare"
+    },
+    "elite": {
+      "enabled": false,
+      "priceUSD": "2.99",
+      "itemCount": 5,
+      "guaranteedRarity": "epic"
+    },
+    "legendary": {
+      "enabled": false,
+      "priceUSD": "4.99",
+      "itemCount": 3,
+      "guaranteedRarity": "legendary"
+    }
+  },
+  "iapProducts": {
+    "removeAds": "remove_ads",
+    "coinPackSmall": "coin_pack_small",
+    "coinPackMedium": "coin_pack_medium",
+    "coinPackLarge": "coin_pack_large",
+    "starterOffer": "starter_offer"
+  },
+  "founder": {
+    "enabled": true,
+    "badgeLabel": "OG Founder",
+    "cosmeticOnly": true
+  },
+  "nftBridge": {
+    "enabled": true,
+    "inAppUnlockingAllowed": false,
+    "directCoinGrantAllowed": false,
+    "notes": "NFT is future-facing identity and community status layer only for V1."
+  }
+}
