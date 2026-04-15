@@ -4,6 +4,10 @@ service cloud.firestore {
     match /players/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    // Push notification tokens: users can write their own, Cloud Functions read all
+    match /players/{userId}/tokens/{tokenId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
     // Purchases subcollection: clients can read, only Cloud Functions can write
     match /players/{userId}/purchases/{purchaseId} {
       allow read: if request.auth != null && request.auth.uid == userId;

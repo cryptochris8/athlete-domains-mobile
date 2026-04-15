@@ -1,6 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getMessaging } from 'firebase-admin/messaging';
 
 initializeApp();
 const db = getFirestore();
@@ -109,4 +111,122 @@ export const restoreUserPurchases = onCall(async (request) => {
 
   const productIds = purchasesSnap.docs.map((doc) => doc.data().productId);
   return { productIds: [...new Set(productIds)] };
+});
+
+// ── Push Notifications ────────────────────────────────
+
+/**
+ * Helper: send a push notification to a specific user.
+ */
+async function sendToUser(uid, title, body, data = {}) {
+  const tokenSnap = await db
+    .collection('players')
+    .doc(uid)
+    .collection('tokens')
+    .doc('push')
+    .get();
+
+  if (!tokenSnap.exists) return false;
+
+  const { token } = tokenSnap.data();
+  if (!token) return false;
+
+  try {
+    await getMessaging().send({
+      token,
+      notification: { title, body },
+      data: { ...data, type: data.type ?? 'general' },
+      apns: {
+        payload: {
+          aps: { sound: 'default', badge: 1 },
+        },
+      },
+    });
+    return true;
+  } catch (err) {
+    // Token is invalid — clean it up
+    if (err.code === 'messaging/registration-token-not-registered') {
+      await tokenSnap.ref.delete();
+    }
+    console.warn(`[Push] Failed to send to ${uid}:`, err.message);
+    return false;
+  }
+}
+
+/**
+ * Scheduled: Daily reward reminder.
+ * Runs every day at 6 PM UTC (~11 AM PT / 2 PM ET).
+ * Notifies players who haven't claimed their daily reward today.
+ */
+export const dailyRewardReminder = onSchedule('every day 18:00', async () => {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Find all players whose lastClaimDate is NOT today
+  const playersSnap = await db.collection('players').get();
+
+  let sent = 0;
+  for (const playerDoc of playersSnap.docs) {
+    const data = playerDoc.data();
+    if (data.lastClaimDate === today) continue; // Already claimed
+
+    const success = await sendToUser(
+      playerDoc.id,
+      'Daily Reward Ready! 🎁',
+      data.dailyStreak > 0
+        ? `Day ${(data.dailyStreak % 7) + 1} streak — don't lose it!`
+        : 'Claim your free coins today!',
+      { type: 'daily_reward' }
+    );
+    if (success) sent++;
+  }
+
+  console.log(`[DailyRewardReminder] Sent ${sent} notifications`);
+});
+
+/**
+ * Scheduled: Streak warning.
+ * Runs every day at 9 PM UTC.
+ * Warns players with active streaks who haven't claimed yet.
+ */
+export const streakWarning = onSchedule('every day 21:00', async () => {
+  const today = new Date().toISOString().split('T')[0];
+
+  const playersSnap = await db
+    .collection('players')
+    .where('dailyStreak', '>', 0)
+    .get();
+
+  let sent = 0;
+  for (const playerDoc of playersSnap.docs) {
+    const data = playerDoc.data();
+    if (data.lastClaimDate === today) continue; // Already claimed
+
+    const success = await sendToUser(
+      playerDoc.id,
+      'Streak at Risk! 🔥',
+      `Your ${data.dailyStreak}-day streak expires at midnight! Claim now.`,
+      { type: 'streak_warning' }
+    );
+    if (success) sent++;
+  }
+
+  console.log(`[StreakWarning] Sent ${sent} notifications`);
+});
+
+/**
+ * Callable: Send a test notification to the current user.
+ * Useful for verifying push is configured correctly.
+ */
+export const sendTestNotification = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Must be signed in');
+
+  const success = await sendToUser(
+    uid,
+    'Test Notification 🏆',
+    'Push notifications are working!',
+    { type: 'test' }
+  );
+
+  return { success };
 });

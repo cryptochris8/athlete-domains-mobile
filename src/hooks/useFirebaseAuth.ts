@@ -5,6 +5,7 @@ import { loadPlayerData, createPlayerDoc } from '../services/firestoreSync';
 import { usePlayerStore } from '../stores/usePlayerStore';
 import { useProgressStore } from '../stores/useProgressStore';
 import { useScoreStore } from '../stores/useScoreStore';
+import { registerPushNotifications } from '../services/pushService';
 import type { Achievement } from '../types';
 
 /**
@@ -25,6 +26,8 @@ export function useFirebaseAuth() {
         setUser(firebaseUser);
         try {
           await hydrateFromCloud();
+          // Register for push after successful auth + hydration
+          registerPushNotifications().catch(() => {});
         } catch (err) {
           console.warn('Cloud sync failed, using local data:', err);
         }
